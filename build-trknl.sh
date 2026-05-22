@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+BRANCH=recode32
+HOLDIR=HOL-"$BRANCH"
+HOLTAR="$HOLDIR".tar.gz
+
 BUILD=$(pwd)/build
 POLY=$BUILD/polyml/bin/poly
 
@@ -10,15 +14,13 @@ cd "$BUILD"
 echo "!! Assumption: patched PolyML has been installed into build/polyml !!"
 
 echo "==> Downloading HOL with tracing support"
-curl -L -o HOL-trknl-master.tar.gz https://github.com/HOL-Theorem-Prover/HOL/archive/refs/heads/trknl-master.tar.gz
-
-tar xvf HOL-trknl-master.tar.gz
-
-rm HOL-trknl-master.tar.gz
+curl -L -o "$HOLTAR" https://github.com/HOL-Theorem-Prover/HOL/archive/refs/heads/"$BRANCH".tar.gz
+tar xvf "$HOLTAR"
+rm "$HOLTAR"
 
 echo "==> Building HOL with the tracing kernel"
 (
-  cd HOL-trknl-master
-  poly < tools/smart-configure.sml
+  cd "$HOLDIR"
+  "$POLY" < tools/smart-configure.sml
   bin/build --trknl
 )
