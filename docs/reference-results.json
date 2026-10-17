@@ -1,0 +1,71 @@
+{
+  "driver_commit": "9528f9240dacbdbaa6884c212f97b9439f4fdf0b",
+  "driver_sha256": "85f03f313ef91b6c4df810f73c3eaf62a85a24096a319b578d5f6377cf604e22",
+  "fixture_sha256": {
+    "check-results.ml": "030e025f255b7f4c3a3f3d00c60f2577f7add95f30c5dc805e25e5780e652520",
+    "convert.sml": "05c653d5c3b184e47ac4e1560bd2451d91f1c23133c44dc7470fc3932062fe12",
+    "produce.sml": "0a626d18d9d0766caf7013bd38ba5afdbb398defa36a5880a16cb33cf60bb376"
+  },
+  "pins": {
+    "polyml": "5612ede0c13a4efd64293576b037c20b86a26a30",
+    "polyml_archive_sha256": "d1b67e2b70a17c844400bff0892a0cfd8dbcb2f1be8e9f44bf11c664ca89aebd",
+    "hol": "57389544efc00ac56e7b52a8a28fb435b4eb7244",
+    "hol_archive_sha256": "7581b8ab4a0e56eaae371fdcf18c217b50da511943fe6ae56238c95f1effadba",
+    "candle": "51781e5ad891f5792bcf34ac1ea18c1ffd1b6425",
+    "candle_archive_sha256": "b2fe5bbb42217dd12ed233ce0dd9b974b6f6d46879daecc79246d6ab381dd093",
+    "cakeml_bootstrap": "4e312c0f7e18b9c5789c8ac4e0af257bff895cf5",
+    "hol_bootstrap": "63f2eb9c146352dfd0bab8c5604a096d1e554d03",
+    "bootstrap_job": 3286,
+    "bootstrap_archive_sha256": "4e074090eb04d8fdfb62536457adb31c98e1b17f6cd66c9483806601251053b7"
+  },
+  "fresh_replay_sessions": 2,
+  "pft_files_per_session": 19,
+  "replayed_targets": [
+    {
+      "name": "candle$TRUTH",
+      "hypotheses": [],
+      "conclusion": "T"
+    },
+    {
+      "name": "bool$TRUTH",
+      "hypotheses": [],
+      "conclusion": "T"
+    },
+    {
+      "name": "marker$stmarker_def",
+      "hypotheses": [],
+      "conclusion": "!x:'a. marker$stmarker x = x"
+    },
+    {
+      "name": "smallCompute$add",
+      "hypotheses": [],
+      "conclusion": "Cexp_add (Cexp_num (NUMERAL (BIT2 _0))) (Cexp_num (NUMERAL (BIT1 (BIT1 _0)))) = Cexp_num (NUMERAL (BIT1 (BIT2 _0)))"
+    }
+  ],
+  "rejected_cases": [
+    "corrupt PFT header",
+    "missing target",
+    "wrong conclusion"
+  ],
+  "pft_sha256": {
+    "While.candle.pft.bin": "ba579168c14f6368e726092e48d210efb2258ad2ee5f15740a05d8acc4fd7c27",
+    "arithmetic.candle.pft.bin": "7e7fdb221bbe31f59d1ae5efcc3ead1d7b03246efa8a075724006f2b4ec1ca59",
+    "bool.candle.pft.bin": "a589f93d32bdbf3e726f9a616169675a452f60418e938384c5e4f6a3f087f999",
+    "candle-preamble.pft.bin": "de20764e5173987773d4979f7cc83003a06c07cd8cc70f0d3084e55e4b847dfa",
+    "combin.candle.pft.bin": "867664766181f8aabe6b5f01d2a2ed6d26fe630ed3eadcbe165784bf7050ee4e",
+    "cv.candle.pft.bin": "2f7e42e551bd415c660f23d77cdca9f46d6e90a065415d501a43c7191999429d",
+    "marker.candle.pft.bin": "2711f71024ca53a11f4f9e294a9e336d139802813d41389dd23e53f88175e8a8",
+    "normalForms.candle.pft.bin": "3df056a6ef3ade0669d06b67a31e6f9f1fa24e2bece99c6ed997784753445cb0",
+    "num.candle.pft.bin": "89847b56da76586740eb70f641f7a41c8596d3ff1ef7afff3b50661536f7d786",
+    "numeral.candle.pft.bin": "87f139e2cbdaf9bdd81447308d48667492ed12bf51883cd9b9c4ae20211544bd",
+    "one.candle.pft.bin": "50978e0b6343fbe9971166915277302f48b328dc6ba076a62818a1d08344d08d",
+    "option.candle.pft.bin": "b84de056134334a47491c8276cd6713c75c1855f8a63357bee8f8aae9361bd85",
+    "pair.candle.pft.bin": "785abfa116e0cc6f1be3b3792da02b72547290fadffe4e997f36fb7d1c07bd79",
+    "prim_rec.candle.pft.bin": "85e8770b32a349ceae73766fdce438c570a2abf8b060714b3bfbdfde0342cae7",
+    "quotient.candle.pft.bin": "74fa8ea048ab1be0fa483a21df713a0a8923e5bb385c1676fc2298e28750ce03",
+    "relation.candle.pft.bin": "934829f144c578421af0f075a8504142a95a9a33e405d051668d8448f36f4f13",
+    "sat.candle.pft.bin": "1d2ecb5a49cc7db5e0183d0de13b9b134fb35b6908ff8c491ebfe5b226010e8d",
+    "smallCompute.candle.pft.bin": "f1f8014ec7d4b8a3da797fad9b460b431cc70d73379d8c5b8b698e76cfde6c24",
+    "sum.candle.pft.bin": "980fc01e4bcb6c3bc0b7e5129d3ef432094536b64004391a9d0e2de5452e28b6"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "polyml": "5612ede0c13a4efd64293576b037c20b86a26a30",
+  "polyml_archive_sha256": "d1b67e2b70a17c844400bff0892a0cfd8dbcb2f1be8e9f44bf11c664ca89aebd",
+  "hol": "57389544efc00ac56e7b52a8a28fb435b4eb7244",
+  "hol_archive_sha256": "7581b8ab4a0e56eaae371fdcf18c217b50da511943fe6ae56238c95f1effadba",
+  "candle": "51781e5ad891f5792bcf34ac1ea18c1ffd1b6425",
+  "candle_archive_sha256": "b2fe5bbb42217dd12ed233ce0dd9b974b6f6d46879daecc79246d6ab381dd093",
+  "cakeml_bootstrap": "4e312c0f7e18b9c5789c8ac4e0af257bff895cf5",
+  "hol_bootstrap": "63f2eb9c146352dfd0bab8c5604a096d1e554d03",
+  "bootstrap_job": 3286,
+  "bootstrap_archive_sha256": "4e074090eb04d8fdfb62536457adb31c98e1b17f6cd66c9483806601251053b7"
+}
