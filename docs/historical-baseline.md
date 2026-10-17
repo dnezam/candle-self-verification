@@ -134,6 +134,15 @@ TR32. Porting those producers/converters/readers together remains separate work.
 
 ## Validation and limits
 
+The full command passed from a clean worktree and new build directory using
+the ARM64/QEMU route above. Both fresh sessions replayed 19 files and checked
+all four sequents; the three rejection cases failed for their intended reasons.
+All 19 PFT files were byte-identical across two independent producer builds.
+[`reference-results.json`](reference-results.json) records the tested driver
+revision, fixture hashes, pins, PFT hashes and checked sequents. These are
+observed reference outputs; replay assertions remain the acceptance check.
+The native x86-64 route remains untested.
+
 Run the lightweight failure-handling tests with:
 
 ```sh

@@ -32,4 +32,3 @@ let check_results () =
   let expected_compute = mk_eq (add_exp, cexp_num n5) in
   check_saved "smallCompute$add" expected_compute;
   print_endline "ALL_CHECKS_PASSED";;
-
