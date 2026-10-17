@@ -1,5 +1,6 @@
 """Failure propagation checks; these do not substitute for proof replay."""
 
+from contextlib import ExitStack
 import json
 from pathlib import Path
 import subprocess
@@ -7,7 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from baseline import Pins, Preparation, sha256
+from baseline import Pins, Preparation, TARGETS, check_replay_output, sha256
 
 
 class PreparationTests(unittest.TestCase):
@@ -45,20 +46,19 @@ class PreparationTests(unittest.TestCase):
         self.assertEqual(downloaded.read_bytes(), source.read_bytes())
 
     def test_each_failed_stage_stops_later_stages(self) -> None:
-        stages = ["bootstrap", "poly", "hol"]
+        stages = ["bootstrap", "poly", "hol", "convert", "reader", "replay"]
         for index, stage in enumerate(stages):
             with self.subTest(stage=stage):
-                with patch.object(self.preparation, "bootstrap") as bootstrap, \
-                     patch.object(self.preparation, "poly") as poly, \
-                     patch.object(self.preparation, "hol") as hol:
-                    calls = [bootstrap, poly, hol]
+                with ExitStack() as stack:
+                    calls = [stack.enter_context(patch.object(self.preparation, name))
+                             for name in stages]
                     calls[index].side_effect = subprocess.CalledProcessError(19, stage)
                     with self.assertRaises(subprocess.CalledProcessError):
                         self.preparation.prepare(stages)
                     for later in calls[index + 1:]:
                         later.assert_not_called()
                     report = json.loads(
-                        (self.preparation.directory / "preparation.json").read_text()
+                        (self.preparation.directory / "result.json").read_text()
                     )
                     self.assertEqual(report["completed"], stages[:index])
                     self.assertEqual(report["last_stage_status"], "failed")
@@ -70,10 +70,41 @@ class PreparationTests(unittest.TestCase):
         with patch.object(self.preparation, "bootstrap"):
             self.preparation.prepare(["bootstrap"])
         report = json.loads(
-            (self.preparation.directory / "preparation.json").read_text()
+            (self.preparation.directory / "result.json").read_text()
         )
         self.assertEqual(report["last_stage_status"], "completed")
         self.assertFalse(report["replay_verified"])
+
+
+class ReplayOutputTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.output = "\n".join(
+            ["Success!"] * 19 + [f"CHECKED: {name}" for name in TARGETS]
+            + ["ALL_CHECKS_PASSED"]
+        )
+
+    def test_complete_replay_is_accepted(self) -> None:
+        check_replay_output(self.output, 19)
+
+    def test_process_success_without_sequent_checks_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            check_replay_output("Success!\n" * 19, 19)
+
+    def test_repl_error_cannot_be_hidden_by_later_success(self) -> None:
+        with self.assertRaises(ValueError):
+            check_replay_output("EXCEPTION: Failure unexpected\n" + self.output, 19)
+
+    def test_missing_target_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            check_replay_output(self.output.replace("CHECKED: smallCompute$add", ""), 19)
+
+    def test_duplicate_marker_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            check_replay_output(self.output + "\nALL_CHECKS_PASSED", 19)
+
+    def test_incomplete_trace_list_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            check_replay_output(self.output, 20)
 
 
 if __name__ == "__main__":

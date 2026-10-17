@@ -3,8 +3,7 @@
 Coordination repository for work on replaying the proof of correctness of
 Candle's machine-code implementation in Candle.
 
-[Historical pipeline preparation](docs/historical-baseline.md) pins the producer,
-converter, reader and bootstrap sources and provides a checked preparation
-command. **The end-to-end replay baseline is not yet reproduced:** the pinned
-HOL build is blocked by holbuild's historical-version support. Preparation does
-not claim any replayed theorem or compatibility with current HOL projects.
+[The historical proof-trace baseline](docs/historical-baseline.md) pins and
+builds a small HOL-to-Candle pipeline, checks the resulting theorem values in
+fresh replay sessions, and records commands and artifact hashes. Current HOL
+compatibility and full Candle self-verification are separate work.
