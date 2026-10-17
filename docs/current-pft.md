@@ -37,6 +37,21 @@ also decodes current `Mark` constructors and the tagged `NONE` in `GEN_ABS`.
 Historical raw identifiers are explicitly rejected. Binary PFT v1 remains
 compatible with the historical reference outputs.
 
+## Candle reader patch
+
+The coordinated reader change is supplied as
+[`patches/candle-pft-v1.patch`](../patches/candle-pft-v1.patch) pending upstream
+publication. Apply it on the pinned `pft` base:
+
+```sh
+git -C "$CANDLE_CHECKOUT" switch -c pft-current 51781e5ad891f5792bcf34ac1ea18c1ffd1b6425
+git -C "$CANDLE_CHECKOUT" am /path/to/candle-self-verification/patches/candle-pft-v1.patch
+```
+
+`git am` preserves the source change but gives the local commit a new committer
+date. Pass `--candle-rev "$(git -C "$CANDLE_CHECKOUT" rev-parse HEAD)"` to the
+harness when using that commit. The reference validation used `5cfb92a` above.
+
 ## Prerequisites
 
 Use clean checkouts at the revisions above. The harness accepts separate paths
@@ -158,3 +173,11 @@ Side-file `Exported` proofs, deleted proofs/tracing gaps, and merger input-ID
 reuse are explicitly unsupported. Live-ID compaction, Candle deletion-based
 memory release, strict certificate manifests and large-project export remain
 outside this integration.
+
+The final run used clean converter and reader commits with `--allow-dirty`
+disabled. It replayed 29 HOL files and 31 Candle files, then each merged file,
+and passed all eleven exact checks in every session. The separate-file sessions
+also checked the original anonymous export. The CLI's emitted feature trace and
+merged output matched the integration driver's bytes. The 16 Python tests and
+18 focused Candle cases passed. [Reference hashes](current-reference-results.json)
+record the tested sources, fixtures and portable outputs without build paths.
