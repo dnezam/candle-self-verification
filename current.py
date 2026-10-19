@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 PRODUCER_REV = "beb36f502e21deb268984503442acf7f331a3cbb"
-CONVERTER_REV = "65b58c6062176f49ef168be1543fd487196bc066"
+CONVERTER_REV = "f87d9f59bffede4115663219a9120441e43c0a23"
 CANDLE_REV = "5cfb92ad87be5eecc9f07502ed80b27cdb4dc317"
 TARGETS = [
     ("currentAnonB", "original"),

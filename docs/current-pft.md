@@ -11,7 +11,7 @@ replay, and separate-file and merged Candle replay. The historical harness and
 | Component | Revision |
 | --- | --- |
 | HOL producer | `beb36f502e21deb268984503442acf7f331a3cbb` |
-| HOL converter and reader | `65b58c6062176f49ef168be1543fd487196bc066` |
+| HOL converter and reader | `f87d9f59bffede4115663219a9120441e43c0a23` |
 | Candle reader | `5cfb92ad87be5eecc9f07502ed80b27cdb4dc317` |
 | Poly/ML and CakeML bootstrap | Unchanged checksum-verified pins in [`pins.json`](../pins.json) |
 
