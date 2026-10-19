@@ -1,0 +1,9 @@
+[project]
+name = "current-pft-fixtures"
+
+[build]
+roots = []
+
+[dependencies.hol]
+git = "https://github.com/HOL-Theorem-Prover/HOL.git"
+rev = "beb36f502e21deb268984503442acf7f331a3cbb"
