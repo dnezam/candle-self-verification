@@ -162,12 +162,15 @@ footer mismatch, named/anonymous dependencies, two-result type definitions and
 explicit context preservation. The new Candle reader also passed the historical
 19-file reference with its four exact target checks.
 
-The HOL core build completes with selftests disabled. The required run with
-`bin/build --trknl --no-helpdocs -j8 -t --seq=tools/sequences/upto-parallel`
-stops in three unmodified `src/parse` precedence-cache tests (`rebuilt`). The
-same failures reproduce on clean producer revision `beb36f502`, using the same
-Poly/ML. The PFT directory's fifteen tests pass. This is not a claim that all
-HOL CI configurations or Candle's CRIU regression suite pass.
+The producer toolchain builds with `holbuild buildhol --trknl`. Clean full
+standard and experimental kernel builds with selftests passed. The native
+tracing run, `bin/build --no-cache --trknl -j4 -t
+--seq=tools/sequences/upto-parallel`, stops in three unmodified `src/parse`
+precedence-cache tests (`rebuilt`). The same three failures reproduce on clean
+producer revision `beb36f502` with the same pinned Poly/ML. The fifteen PFT tests
+pass under the standard, experimental, tracing and Moscow ML builds. Full matrix
+results are tracked in [HOL #2091](https://github.com/HOL-Theorem-Prover/HOL/pull/2091).
+Candle's CRIU regression suite was not run.
 
 Side-file `Exported` proofs, deleted proofs/tracing gaps, and merger input-ID
 reuse are explicitly unsupported. Live-ID compaction, Candle deletion-based
@@ -177,7 +180,9 @@ outside this integration.
 The final run used clean converter and reader commits with `--allow-dirty`
 disabled. It replayed 29 HOL files and 31 Candle files, then each merged file,
 and passed all eleven exact checks in every session. The separate-file sessions
-also checked the original anonymous export. The CLI's emitted feature trace and
-merged output matched the integration driver's bytes. The 16 Python tests and
-18 focused Candle cases passed. [Reference hashes](current-reference-results.json)
-record the tested sources, fixtures and portable outputs without build paths.
+also checked the original anonymous export. All 62 PFT artifacts were
+byte-identical to the previous converter pin, and the 16 Python tests passed.
+Earlier validation checked CLI output against the integration driver's bytes
+and passed 18 focused Candle reader cases; the reader is unchanged.
+[Reference hashes](current-reference-results.json) record the tested sources,
+fixtures and portable outputs without build paths.

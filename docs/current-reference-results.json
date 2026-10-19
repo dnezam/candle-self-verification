@@ -113,7 +113,7 @@
       "ruleset": "hol4"
     }
   },
-  "driver_sha256": "b7da3233b7f36e2114fc34b1ad6ccbc00019888f96d732062034be3461974170",
+  "driver_sha256": "52ff8fe7d7a1204cb97bb0e46ef9b8770d53811b41293a1d370ddff3a69b9727",
   "fixture_sha256": {
     "audit-raw.sml": "8942103673ca7118818a5d1ad4bc1946197d0ce1fde7933bf64162f37e520a6f",
     "check-results.ml": "4b93fadb26efa2fcf3f86aca67ecd0928a3bfa1fcd209298d173dcef9ae2a864",
@@ -154,19 +154,17 @@
     "src/postkernel/prooftrace/pft-main.sml": "c7a1104790681517f582016cdbd1e828afe7a66448ceff3b8a3c7d515c060289",
     "src/postkernel/prooftrace/pft-replay-test.sml": "1bac4f1344fb72aa9bcd671c910a484a0b553219be50a9ea351015d5c28ae532",
     "src/postkernel/prooftrace/replay-test.sml": "1e36e022affdfa78a7b60aa8ed98677408016c31aeaeb16a3058a21b370f3006",
-    "src/postkernel/prooftrace/selftest-pftmerge.sml": "a2f0ca880295f2d33001f2d02a6dfeef612850b6bad4caf3158efa053631a730",
-    "src/postkernel/prooftrace/selftest-pftreader.sml": "790f6dff5992f6d735a98aa7200fbaf58d4fb7852f456750e4256a292e172344",
-    "src/postkernel/prooftrace/selftest.sml": "17d7cd2c8005f596705896758d347ee0a2f345954b4e005f95e83763e4bbe5c3"
+    "src/postkernel/prooftrace/selftest.sml": "be8155ff6ef48519a9c2f3d321309ec331fba72c36175382414455a2276f5570"
   },
   "candle_source_sha256": {
     "candle/pft/pft.ml": "849e3805b12946ca6cf23c829433618c5f5ff4d5beaf32719c732691fd961846",
     "candle/pft/replay.ml": "670e727d3d71ecd82f6cc546bf5f6d89adf05e40aed4ce2cc18c4e623a890b38",
     "candle/build/cake": "a9a6e04cfde379a350d050b9c634408cfb7520329f0c92acfb58222fac88ad0d"
   },
-  "tested_integration_revision": "b58dcc033c6dd6fa24b1ee16ccffac6ee02b557b",
+  "tested_integration_revision": "6eee6159c398f47ea0ae7ef78f2258a25a8c4105",
   "sources": {
     "producer": "beb36f502e21deb268984503442acf7f331a3cbb",
-    "converter": "65b58c6062176f49ef168be1543fd487196bc066",
+    "converter": "f87d9f59bffede4115663219a9120441e43c0a23",
     "candle": "5cfb92ad87be5eecc9f07502ed80b27cdb4dc317"
   },
   "pft_sha256": {
