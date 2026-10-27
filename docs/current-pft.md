@@ -12,13 +12,14 @@ replay, and separate-file and merged Candle replay. The historical harness and
 | --- | --- |
 | HOL producer | `beb36f502e21deb268984503442acf7f331a3cbb` |
 | HOL converter and reader | `f87d9f59bffede4115663219a9120441e43c0a23` |
-| Candle reader | `5cfb92ad87be5eecc9f07502ed80b27cdb4dc317` |
+| Candle reader | `646e3a2afbf20a8fcfdb15cf7562ee321b74791c` |
 | Poly/ML and CakeML bootstrap | Unchanged checksum-verified pins in [`pins.json`](../pins.json) |
 
 The converter is a focused port of the HOL `replay` branch
 `427496c4b6d9796b0d02167715ac7412f5f83a44`, retaining the version-1 writer and
 explicit compute contexts from `57389544efc00ac56e7b52a8a28fb435b4eb7244`.
-The coordinated Candle reader is based on its `pft` branch `51781e5a`.
+The Candle reader is the unmodified reader merged into master in
+[Candle #18](https://github.com/CakeML/candle/pull/18).
 
 The supported interchange is `PFT\0`, unsigned LEB128 integer version **1**,
 then ruleset `hol4` or `candle`. Four namespaces (`ty`, `tm`, `th`, `ci`) have
@@ -37,20 +38,13 @@ also decodes current `Mark` constructors and the tagged `NONE` in `GEN_ABS`.
 Historical raw identifiers are explicitly rejected. Binary PFT v1 remains
 compatible with the historical reference outputs.
 
-## Candle reader patch
+## Candle invocation
 
-The coordinated reader change is supplied as
-[`patches/candle-pft-v1.patch`](../patches/candle-pft-v1.patch) pending upstream
-publication. Apply it on the pinned `pft` base:
-
-```sh
-git -C "$CANDLE_CHECKOUT" switch -c pft-current 51781e5ad891f5792bcf34ac1ea18c1ffd1b6425
-git -C "$CANDLE_CHECKOUT" am /path/to/candle-self-verification/patches/candle-pft-v1.patch
-```
-
-`git am` preserves the source change but gives the local commit a new committer
-date. Pass `--candle-rev "$(git -C "$CANDLE_CHECKOUT" rev-parse HEAD)"` to the
-harness when using that commit. The reference validation used `5cfb92a` above.
+The harness follows the historical driver's invocation-file approach. It copies
+`replay.ml` into a generated driver, substituting the trace list in its final
+`replay_all` call. Paths are relative to `candle/pft/`, as the reader expects.
+The checkout's reader files stay unchanged, including the `extract_footer`
+shell script used by master. No reader patch is needed.
 
 ## Prerequisites
 
@@ -75,7 +69,7 @@ The last command prints the producer HOL directory. Its standard `upto-hol`
 build includes the `cv` dependencies needed by the fixtures.
 
 The reader source is loaded at runtime, so the same pinned Candle bootstrap
-can be reused with the coordinated reader. Build it using the checked helper:
+can be reused with the master reader. Build it using the checked helper:
 
 ```sh
 python3 baseline.py reader --build-dir "$PWD/build/prerequisites"
@@ -126,7 +120,7 @@ and simultaneous substitution, binder shadowing, nested proof marks,
 `GEN_ABS NONE`, and verified computation of `2 + 3` in `cv`. Both readers check
 the exact conclusions and the complete hypothesis sets, including nonempty
 sets; their expectations are constructed independently of replayed conclusions.
-Candle reader tests also check both results of its type-definition command.
+The exact-sequent checks include the type-definition result.
 
 The fixtures introduce the `tiny` type and the four constants `left`, `right`,
 `first`, `second`. They introduce no axioms or cheats and change no existing
@@ -154,13 +148,11 @@ Run the integration checks above and the focused suites:
 python3 -m unittest -v test_baseline test_current
 HOLSELFTESTLEVEL=1 "$CONVERTER_HOL/bin/Holmake" \
   -C "$CONVERTER_HOL/src/postkernel/prooftrace"
-python3 "$CANDLE_CHECKOUT/candle/pft/test_replay.py" --runner /path/to/qemu-x86_64-static
 ```
 
-The HOL/Candle suites cover unsupported versions/rulesets before kernel effects,
-footer mismatch, named/anonymous dependencies, two-result type definitions and
-explicit context preservation. The new Candle reader also passed the historical
-19-file reference with its four exact target checks.
+The HOL suite covers malformed streams, dependencies, type definitions and
+compute contexts. The current integration checks Candle through all eleven
+exact sequents in separate and merged replay.
 
 The producer toolchain builds with `holbuild buildhol --trknl`. Clean full
 standard and experimental kernel builds with selftests passed. The native
@@ -181,8 +173,7 @@ The final run used clean converter and reader commits with `--allow-dirty`
 disabled. It replayed 29 HOL files and 31 Candle files, then each merged file,
 and passed all eleven exact checks in every session. The separate-file sessions
 also checked the original anonymous export. All 62 PFT artifacts were
-byte-identical to the previous converter pin, and the 16 Python tests passed.
-Earlier validation checked CLI output against the integration driver's bytes
-and passed 18 focused Candle reader cases; the reader is unchanged.
+byte-identical to the previous reference run, and the 16 Python tests passed.
+
 [Reference hashes](current-reference-results.json) record the tested sources,
 fixtures and portable outputs without build paths.

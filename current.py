@@ -14,7 +14,7 @@ import sys
 
 PRODUCER_REV = "beb36f502e21deb268984503442acf7f331a3cbb"
 CONVERTER_REV = "f87d9f59bffede4115663219a9120441e43c0a23"
-CANDLE_REV = "5cfb92ad87be5eecc9f07502ed80b27cdb4dc317"
+CANDLE_REV = "646e3a2afbf20a8fcfdb15cf7562ee321b74791c"
 TARGETS = [
     ("currentAnonB", "original"),
     ("currentAnonB", "cross_anon"),
@@ -167,7 +167,8 @@ class CurrentRun:
         }
         self.report["candle_source_sha256"] = {
             name: sha256(self.candle / name)
-            for name in ("candle/pft/pft.ml", "candle/pft/replay.ml", "candle/build/cake")
+            for name in ("candle/pft/pft.ml", "candle/pft/replay.ml", "candle/pft/misc.ml",
+                         "candle/pft/extract_footer", "candle/build/cake")
         }
         self.report["producer_tool_sha256"] = {
             name: sha256(self.hol / "bin" / name)
@@ -264,8 +265,13 @@ class CurrentRun:
     def replay_candle(self, mode: str, paths: list[Path]) -> None:
         reader = (self.candle / "candle/pft/replay.ml").read_text()
         checks = (self.fixtures / "check-results.ml").read_text()
-        names = "; ".join(json.dumps(str(path)) for path in paths)
-        program = reader + "\n" + checks + f"\nlet _ = replay_all [{names}]; "
+        invocation = 'let _ = replay_all ["merged.candle.pft.bin"];;'
+        if reader.count(invocation) != 1:
+            raise ValueError("pinned reader entry point changed")
+        names = "; ".join(json.dumps(os.path.relpath(path, self.candle / "candle/pft"))
+                          for path in paths)
+        program = reader.replace(invocation, f"let _ = replay_all [{names}];;")
+        program += "\n" + checks + "\nlet _ = "
         if mode == "multi":
             program += "check_current_anonymous (); "
         program += "check_current_results ();;\n"
@@ -312,7 +318,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hol", type=Path, required=True, help="prebuilt tracing HOL toolchain")
     parser.add_argument("--converter", type=Path, required=True, help="HOL checkout with the ported converter")
-    parser.add_argument("--candle", type=Path, required=True, help="Candle checkout with coordinated reader and built runtime")
+    parser.add_argument("--candle", type=Path, required=True, help="Candle checkout with the pinned reader and built runtime")
     parser.add_argument("--build-dir", type=Path, default=Path(__file__).resolve().parent / "build/current")
     parser.add_argument("--runner", default="", help="optional runner command, e.g. qemu-x86_64-static")
     parser.add_argument("--allow-dirty", action="store_true",
