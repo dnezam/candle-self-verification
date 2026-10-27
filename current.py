@@ -11,6 +11,7 @@ from pathlib import Path
 import shlex
 import subprocess
 import sys
+import tempfile
 
 PRODUCER_REV = "beb36f502e21deb268984503442acf7f331a3cbb"
 CONVERTER_REV = "f87d9f59bffede4115663219a9120441e43c0a23"
@@ -263,27 +264,34 @@ class CurrentRun:
                       candle=False, anonymous=mode == "multi")
 
     def replay_candle(self, mode: str, paths: list[Path]) -> None:
-        reader = (self.candle / "candle/pft/replay.ml").read_text()
+        pft = self.candle / "candle/pft"
+        reader = (pft / "replay.ml").read_text()
         checks = (self.fixtures / "check-results.ml").read_text()
         invocation = 'let _ = replay_all ["merged.candle.pft.bin"];;'
         if reader.count(invocation) != 1:
             raise ValueError("pinned reader entry point changed")
-        names = "; ".join(json.dumps(os.path.relpath(path, self.candle / "candle/pft"))
-                          for path in paths)
-        program = reader.replace(invocation, f"let _ = replay_all [{names}];;")
-        program += "\n" + checks + "\nlet _ = "
-        if mode == "multi":
-            program += "check_current_anonymous (); "
-        program += "check_current_results ();;\n"
-        driver = self.build / f"replay-candle-{mode}.ml"
-        driver.write_text(program)
-        request = self.build / f"replay-candle-{mode}-input.ml"
-        request.write_text(f'#use {json.dumps(str(driver))};;\n')
-        log = self.build / f"replay-candle-{mode}.log"
-        self.run(self.runner + [str(self.candle / "candle/build/cake"), "--candle"],
-                 cwd=self.candle / "candle/build", output=log, stdin=request,
-                 env={"CML_HEAP_SIZE": "8000"})
-        verify_checks(log, len(paths), candle=True, anonymous=mode == "multi")
+        # The reader passes relative trace names to an unquoted shell command.
+        with tempfile.TemporaryDirectory(prefix="current-", dir=pft) as directory:
+            staging = Path(directory)
+            names = []
+            for index, path in enumerate(paths):
+                link = staging / f"trace-{index}.pft.bin"
+                link.symlink_to(path)
+                names.append(json.dumps(str(link.relative_to(pft))))
+            program = reader.replace(invocation, f"let _ = replay_all [{'; '.join(names)}];;")
+            program += "\n" + checks + "\nlet _ = "
+            if mode == "multi":
+                program += "check_current_anonymous (); "
+            program += "check_current_results ();;\n"
+            driver = self.build / f"replay-candle-{mode}.ml"
+            driver.write_text(program)
+            request = self.build / f"replay-candle-{mode}-input.ml"
+            request.write_text(f'#use {json.dumps(str(driver))};;\n')
+            log = self.build / f"replay-candle-{mode}.log"
+            self.run(self.runner + [str(self.candle / "candle/build/cake"), "--candle"],
+                     cwd=self.candle / "candle/build", output=log, stdin=request,
+                     env={"CML_HEAP_SIZE": "8000"})
+            verify_checks(log, len(paths), candle=True, anonymous=mode == "multi")
 
     def execute(self) -> None:
         try:

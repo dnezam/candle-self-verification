@@ -42,7 +42,10 @@ compatible with the historical reference outputs.
 
 The harness follows the historical driver's invocation-file approach. It copies
 `replay.ml` into a generated driver, substituting the trace list in its final
-`replay_all` call. Paths are relative to `candle/pft/`, as the reader expects.
+`replay_all` call. Traces are linked under temporary numbered names inside
+`candle/pft/`, so master's shell command receives safe relative paths even when
+the build directory contains spaces. The temporary links and footers are removed
+after replay.
 The checkout's reader files stay unchanged, including the `extract_footer`
 shell script used by master. No reader patch is needed.
 
@@ -174,6 +177,7 @@ disabled. It replayed 29 HOL files and 31 Candle files, then each merged file,
 and passed all eleven exact checks in every session. The separate-file sessions
 also checked the original anonymous export. All 62 PFT artifacts were
 byte-identical to the previous reference run, and the 16 Python tests passed.
+The build directory contained spaces and a semicolon to check path handling.
 
 [Reference hashes](current-reference-results.json) record the tested sources,
 fixtures and portable outputs without build paths.
