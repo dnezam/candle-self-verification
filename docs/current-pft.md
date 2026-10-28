@@ -10,14 +10,13 @@ replay, and separate-file and merged Candle replay. The historical harness and
 
 | Component | Revision |
 | --- | --- |
-| HOL producer | `beb36f502e21deb268984503442acf7f331a3cbb` |
-| HOL converter and reader | `f87d9f59bffede4115663219a9120441e43c0a23` |
+| HOL producer | `8d60d43356361dd7a21a9e5cecf5fe8ffe33c4d7` |
+| HOL converter and reader | `8d60d43356361dd7a21a9e5cecf5fe8ffe33c4d7` |
 | Candle reader | `646e3a2afbf20a8fcfdb15cf7562ee321b74791c` |
 | Poly/ML and CakeML bootstrap | Unchanged checksum-verified pins in [`pins.json`](../pins.json) |
 
-The converter is a focused port of the HOL `replay` branch
-`427496c4b6d9796b0d02167715ac7412f5f83a44`, retaining the version-1 writer and
-explicit compute contexts from `57389544efc00ac56e7b52a8a28fb435b4eb7244`.
+The producer and converter use the same revision of
+[HOL #2091](https://github.com/HOL-Theorem-Prover/HOL/pull/2091).
 The Candle reader is the unmodified reader merged into master in
 [Candle #18](https://github.com/CakeML/candle/pull/18).
 
@@ -32,8 +31,10 @@ are rejected. JSON Lines is writer-only diagnostic output. HOL replay requires
 `hol4`; Candle replay requires `candle`; merge rejects mixed rulesets before
 opening its output.
 
-The raw producer emits TR32. Its current immutable `{name, epoch}` kernel
-identifiers differ from the historical baseline's reference layout. The parser
+The raw producer emits TR32 with a six-field identity-aware root containing
+export-time live and imported signature metadata. Its immutable `{name, epoch}`
+kernel identifiers differ from the historical baseline's reference layout.
+The converter gives retired local identities distinct private names. The parser
 also decodes current `Mark` constructors and the tagged `NONE` in `GEN_ABS`.
 Historical raw identifiers are explicitly rejected. Binary PFT v1 remains
 compatible with the historical reference outputs.
@@ -157,27 +158,24 @@ The HOL suite covers malformed streams, dependencies, type definitions and
 compute contexts. The current integration checks Candle through all eleven
 exact sequents in separate and merged replay.
 
-The producer toolchain builds with `holbuild buildhol --trknl`. Clean full
-standard and experimental kernel builds with selftests passed. The native
-tracing run, `bin/build --no-cache --trknl -j4 -t
---seq=tools/sequences/upto-parallel`, stops in three unmodified `src/parse`
-precedence-cache tests (`rebuilt`). The same three failures reproduce on clean
-producer revision `beb36f502` with the same pinned Poly/ML. The fifteen PFT tests
-pass under the standard, experimental, tracing and Moscow ML builds. Full matrix
-results are tracked in [HOL #2091](https://github.com/HOL-Theorem-Prover/HOL/pull/2091).
+The producer toolchain builds with `holbuild buildhol --trknl` using the pinned
+tracing Poly/ML. The same HOL revision passed the standard, experimental,
+Moscow ML and OpenTheory CI jobs in
+[run 40596371327](https://github.com/HOL-Theorem-Prover/HOL/actions/runs/40596371327).
 Candle's CRIU regression suite was not run.
 
-Side-file `Exported` proofs, deleted proofs/tracing gaps, and merger input-ID
-reuse are explicitly unsupported. Live-ID compaction, Candle deletion-based
-memory release, strict certificate manifests and large-project export remain
-outside this integration.
+The merger reuses output IDs after their final use. Input-ID reuse after deletion,
+side-file `Exported` proofs and deleted proofs/tracing gaps remain unsupported.
+Retired imported identities and noncanonical logical roles are also rejected;
+see the pinned converter's `pft-cli.md` for its limits. Strict certificate
+manifests and large-project export remain outside this integration's checks.
 
 The final run used clean converter and reader commits with `--allow-dirty`
-disabled. It replayed 29 HOL files and 31 Candle files, then each merged file,
-and passed all eleven exact checks in every session. The separate-file sessions
-also checked the original anonymous export. All 62 PFT artifacts were
-byte-identical to the previous reference run, and the 16 Python tests passed.
-The build directory contained spaces and a semicolon to check path handling.
+disabled and a tracing producer built from the same HOL revision. It replayed
+29 HOL files and 31 Candle files, then each merged file, and passed all eleven
+exact checks in every session. The separate-file sessions also checked the
+original anonymous export. All 16 Python tests passed. The build directory
+contained spaces and a semicolon to check path handling.
 
 [Reference hashes](current-reference-results.json) record the tested sources,
 fixtures and portable outputs without build paths.
