@@ -3,17 +3,23 @@
 This harness checks a pinned current HOL producer through binary PFT conversion,
 target selection, and two readers. Eleven independently constructed sequents
 must agree with replay in four fresh processes: separate-file and merged HOL
-replay, and separate-file and merged Candle replay. The historical harness and
-`pins.json` remain unchanged as a regression reference.
+replay, and separate-file and merged Candle replay. Both harnesses use the
+Poly/ML runtime pinned in `pins.json`; the historical HOL and Candle revisions
+remain fixed as a regression reference.
 
 ## Revisions and contract
 
 | Component | Revision |
 | --- | --- |
-| HOL producer | `8d60d43356361dd7a21a9e5cecf5fe8ffe33c4d7` |
-| HOL converter and reader | `8d60d43356361dd7a21a9e5cecf5fe8ffe33c4d7` |
+| HOL producer | `b16a4d9fe10b06883eb60450e5fc9e5344d77c92` |
+| HOL converter and reader | `b16a4d9fe10b06883eb60450e5fc9e5344d77c92` |
 | Candle reader | `646e3a2afbf20a8fcfdb15cf7562ee321b74791c` |
-| Poly/ML and CakeML bootstrap | Unchanged checksum-verified pins in [`pins.json`](../pins.json) |
+| Poly/ML | `95414c58c36f2cce2c1838bc4ec0716ddfe6c540` (`exportSmall-5.9.2`) |
+| CakeML bootstrap | Unchanged checksum-verified pin in [`pins.json`](../pins.json) |
+
+The Poly/ML fork rebases the existing exporter onto `fixes-5.9.2` at
+`ccd3e3717f72`. Its archive hash is checked by `baseline.py poly`; the
+exporter implementation is unchanged from the previous `5612ede0` pin.
 
 The producer and converter use the same revision of
 [HOL #2091](https://github.com/HOL-Theorem-Prover/HOL/pull/2091).
@@ -27,9 +33,9 @@ independent IDs and four footer bounds. `COMPUTE_INIT` creates a context object;
 helper equations, and each consuming theory creates its own context.
 
 The experimental `0.1.0` string header and three-namespace ambient-compute format
-are rejected. JSON Lines is writer-only diagnostic output. HOL replay requires
-`hol4`; Candle replay requires `candle`; merge rejects mixed rulesets before
-opening its output.
+are rejected. The writer emits binary PFT only. HOL replay requires `hol4`;
+Candle replay requires `candle`; merge rejects mixed rulesets before opening
+its output.
 
 The raw producer emits TR32 with a six-field identity-aware root containing
 export-time live and imported signature metadata. Its immutable `{name, epoch}`
@@ -59,13 +65,16 @@ It checks their revisions; dirty converter/reader sources require an explicit
 manifest or a clean Git checkout; a declared revision alone is insufficient.
 
 Build the current producer with holbuild 0.11.5 or later and the pinned tracing
-Poly/ML. The historical helper can prepare the checksum-verified prerequisites:
+Poly/ML. Keep its installation outside disposable worktrees: cached HOL
+executables link to its shared library. The historical helper can prepare the
+checksum-verified prerequisites at a persistent location:
 
 ```sh
-python3 baseline.py bootstrap --build-dir "$PWD/build/prerequisites"
-python3 baseline.py poly --build-dir "$PWD/build/prerequisites"
-HOLBUILD_POLY="$PWD/build/prerequisites/polyml/bin/poly" \
-HOLBUILD_POLYC="$PWD/build/prerequisites/polyml/bin/polyc" \
+PREREQUISITES="$HOME/.local/opt/candle-pft-95414"
+python3 baseline.py bootstrap --build-dir "$PREREQUISITES"
+python3 baseline.py poly --build-dir "$PREREQUISITES"
+HOLBUILD_POLY="$PREREQUISITES/polyml/bin/poly" \
+HOLBUILD_POLYC="$PREREQUISITES/polyml/bin/polyc" \
   holbuild --source-dir fixtures/current buildhol --trknl
 ```
 
@@ -76,8 +85,8 @@ The reader source is loaded at runtime, so the same pinned Candle bootstrap
 can be reused with the master reader. Build it using the checked helper:
 
 ```sh
-python3 baseline.py reader --build-dir "$PWD/build/prerequisites"
-cp -a build/prerequisites/candle-51781e5ad891f5792bcf34ac1ea18c1ffd1b6425/candle/build \
+python3 baseline.py reader --build-dir "$PREREQUISITES"
+cp -a "$PREREQUISITES/candle-51781e5ad891f5792bcf34ac1ea18c1ffd1b6425/candle/build" \
   "$CANDLE_CHECKOUT/candle/build"
 ```
 
@@ -171,7 +180,11 @@ see the pinned converter's `pft-cli.md` for its limits. Strict certificate
 manifests and large-project export remain outside this integration's checks.
 
 The final run used clean converter and reader commits with `--allow-dirty`
-disabled and a tracing producer built from the same HOL revision. It replayed
+disabled and a tracing producer built from the same HOL revision. The runtime
+repin was checked with a fresh Poly/ML installation and tracing HOL rebuild;
+executable linkage selected that installation, and the producer reported
+Poly/ML compiler version `592`. The `exportSmallToFD(17)` probe produced
+`2300000000000000`. It replayed
 29 HOL files and 31 Candle files, then each merged file, and passed all eleven
 exact checks in every session. The separate-file sessions also checked the
 original anonymous export. All 16 Python tests passed. The build directory

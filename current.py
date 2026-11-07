@@ -13,8 +13,8 @@ import subprocess
 import sys
 import tempfile
 
-PRODUCER_REV = "8d60d43356361dd7a21a9e5cecf5fe8ffe33c4d7"
-CONVERTER_REV = "8d60d43356361dd7a21a9e5cecf5fe8ffe33c4d7"
+PRODUCER_REV = "b16a4d9fe10b06883eb60450e5fc9e5344d77c92"
+CONVERTER_REV = "b16a4d9fe10b06883eb60450e5fc9e5344d77c92"
 CANDLE_REV = "646e3a2afbf20a8fcfdb15cf7562ee321b74791c"
 TARGETS = [
     ("currentAnonB", "original"),
