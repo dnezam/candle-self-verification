@@ -8,17 +8,17 @@ if [ "$#" -ne 4 ]; then
   echo "usage: $0 /path/to/Candle /path/to/HOL /path/to/tracing /fixtures" >&2
   exit 2
 fi
-candle=$(cd -- "$1" && pwd)
-hol=$(cd -- "$2" && pwd)
-tracing=$(cd -- "$3" && pwd)
-fixtures=$(cd -- "$4" && pwd)
+candle=$(CDPATH= cd -- "$1" && pwd)
+hol=$(CDPATH= cd -- "$2" && pwd)
+tracing=$(CDPATH= cd -- "$3" && pwd)
+fixtures=$(CDPATH= cd -- "$4" && pwd)
 # The path goes into an ML string, a sed replacement and replay's shell command.
 case "$fixtures" in
   *[!A-Za-z0-9._/+-]*)
     echo "fixture path has a character replay can't pass on: $fixtures" >&2
     exit 2 ;;
 esac
-dir=$(cd -- "$(dirname -- "$0")" && pwd)
+dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 pft="$hol/src/postkernel/prooftrace/pft.sh"
 export PFT_HOL="${PFT_HOL:-$tracing/bin/hol}"
 
@@ -48,9 +48,12 @@ cd "$candle/candle/build"
       -e '/^let _ = replay_all \[/d' "$candle/candle/pft/replay.ml"
   cat "$dir/check.ml"
 } | ./cake --candle > "$log" 2>&1
-# Candle can exit zero after an exception, so check the log itself.
-if ! grep -q 'ALL_CANDLE_PASS$' "$log" || grep -q EXCEPTION "$log"; then
-  echo "Candle check failed; see $log" >&2
+# Candle can exit zero after an exception or a compile error, and keeps
+# reading the phrases after one, so check the log itself.
+exact=$(grep -c 'PFT_EXACT ' "$log" || true)
+if [ "$exact" -ne 24 ] || ! grep -q 'ALL_CANDLE_PASS$' "$log" ||
+   grep -q -E 'EXCEPTION|ERROR:|Parsing failed' "$log"; then
+  echo "Candle check failed ($exact of 24 exact sequents); see $log" >&2
   exit 1
 fi
-echo "$(grep -c 'PFT_EXACT ' "$log") exact sequents checked; log: $log"
+echo "24 exact sequents checked; log: $log"
