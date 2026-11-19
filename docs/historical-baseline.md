@@ -9,10 +9,15 @@ or a claim that current HOL projects can use this converter unchanged.
 ## Revisions
 
 Complete commits and download SHA-256 values are in [`pins.json`](../pins.json).
+The HOL and Candle revisions preserve the historical pipeline. Poly/ML is
+shared with the current integration and now uses `exportSmall-5.9.2`; the
+original baseline used `5612ede0c13a4efd64293576b037c20b86a26a30`.
+That original runtime and its reference outputs remain reproducible at
+[the historical baseline commit](https://github.com/dnezam/candle-self-verification/tree/54561f2ca4fa7d5bfa3b1eac33302af695f9527e).
 
 | Component | Revision | Role |
 | --- | --- | --- |
-| Poly/ML | [`5612ede0`](https://github.com/digama0/polyml/commit/5612ede0c13a4efd64293576b037c20b86a26a30) | `exportSmallToFD` runtime, reporting version 5.9.2 |
+| Poly/ML | [`95414c58`](https://github.com/digama0/polyml/commit/95414c58c36f2cce2c1838bc4ec0716ddfe6c540) | `exportSmallToFD` runtime, reporting version 5.9.2 |
 | HOL | [`57389544`](https://github.com/HOL-Theorem-Prover/HOL/commit/57389544efc00ac56e7b52a8a28fb435b4eb7244) | Both tracing producer and converter |
 | Candle | [`51781e5a`](https://github.com/CakeML/candle/commit/51781e5ad891f5792bcf34ac1ea18c1ffd1b6425) | Historical `pft` reader |
 | CakeML bootstrap | [`4e312c0f`](https://github.com/CakeML/cakeml/commit/4e312c0f7e18b9c5789c8ac4e0af257bff895cf5) | Source associated with pre-generated compiler assembly |
@@ -134,10 +139,11 @@ TR32. Porting those producers/converters/readers together remains separate work.
 
 ## Validation and limits
 
-The full command passed from a clean worktree and new build directory using
-the ARM64/QEMU route above. Both fresh sessions replayed 19 files and checked
-all four sequents; the three rejection cases failed for their intended reasons.
-All 19 PFT files were byte-identical across two independent producer builds.
+The full command passed with freshly built Poly/ML `95414c58` and tracing
+HOL in a new build directory using the ARM64/QEMU route above. Both fresh
+sessions replayed 19 files and checked all four sequents; the three rejection
+cases failed for their intended reasons. All 19 portable PFT files match
+the original `5612ede0` runtime reference byte for byte.
 [`reference-results.json`](reference-results.json) records the tested driver
 revision, fixture hashes, pins, PFT hashes and checked sequents. These are
 observed reference outputs; replay assertions remain the acceptance check.

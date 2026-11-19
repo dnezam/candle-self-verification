@@ -50,7 +50,8 @@ fun inventory file = let
     del_range = command "DEL_RANGE"}
   fun specific opcode reader = let
     val desc = PFTOpcodes.lookup_desc descs opcode
-    val _ = #readVarint reader ()
+    val _ = if null (#results desc) then ()
+            else ignore (#readVarint reader ())
     val _ = PFTReader.read_raw_args desc reader
   in count (#tag desc) end
   val _ = PFTReader.read {file = file, binary = true,
@@ -71,18 +72,18 @@ fun emit ruleset subdir = let
   fun output name = OS.Path.concat (dir, name ^ ".pft.bin")
   fun add path = paths := !paths @ [path]
   val _ = if candle then
-    (PFTCandlePreamble.emit {output = output "preamble", binary = true};
+    (PFTCandlePreamble.emit {output = output "preamble"};
      add (output "preamble")) else ()
   fun one (name, path) = let
     val _ = print ("CONVERTING: " ^ subdir ^ "/" ^ name ^ "\n")
     val _ = TextIO.flushOut TextIO.stdOut
     val _ = PFTEmit.emit_theory
-      {trace = path, output = output name, binary = true, ruleset = ruleset}
+      {trace = path, output = output name, ruleset = ruleset}
     val _ = add (output name)
   in
     if candle andalso name = "cv" then
       (PFTCandleComputePreamble.emit_file
-        {output = output "compute-preamble", binary = true};
+        {output = output "compute-preamble"};
        add (output "compute-preamble")) else ()
   end
   val _ = List.app one (!ordered)
