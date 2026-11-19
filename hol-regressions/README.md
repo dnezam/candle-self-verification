@@ -1,9 +1,11 @@
 # HOL proof-trace regressions in Candle
 
 HOL4's proof-trace regression fixtures (`src/postkernel/prooftrace/tests` in
-HOL) cover bugs found in the trace producer and converter. HOL replays them
-itself; this directory checks that Candle replays the `candle` ruleset
-outputs too, and that each replayed theorem has exactly the expected sequent.
+HOL) cover bugs found in the trace producer and converter. HOL replays all
+but the compute-binder fixture itself; this directory checks that Candle
+replays the `candle` ruleset outputs, and that each replayed theorem has
+exactly the expected sequent. The compute-binder fixture is emitted only for
+Candle, so its four checks here are its only replay.
 A replay that merely succeeds can hide a converter bug that changes a theorem,
 so `check.ml` compares 24 theorems' hypotheses and conclusions with sequents
 built independently in Candle.
@@ -39,7 +41,7 @@ built independently in Candle.
 ## Running the check
 
 First produce the fixtures with HOL's regression runner, which also checks HOL
-replay of them:
+replay of all but the compute-binder fixture:
 
 ```sh
 /path/to/HOL/src/postkernel/prooftrace/tests/run.sh all \
