@@ -11,3 +11,6 @@ fresh replay sessions, and records commands and artifact hashes.
 Poly/ML runtime and checks a pinned current HOL producer through both
 HOL and Candle readers, with separate and merged proof traces. Full Candle
 self-verification remains separate work.
+
+[HOL proof-trace regressions](hol-regressions/README.md) replays HOL's
+encountered-bug fixtures in Candle and checks 24 exact sequents.
