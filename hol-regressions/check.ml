@@ -1,3 +1,8 @@
+(* Each check names a theorem the replay saved, its expected hypotheses and
+   its expected conclusion, built here from Candle terms. The comment above
+   each one gives that sequent in HOL notation and, where the sequent alone
+   doesn't show it, what the fixture exercises; the fixtures' sources are
+   in HOL's src/postkernel/prooftrace/tests. *)
 let check_sequent name hs tm th =
   if length (hyp th) = length hs &&
      forall (fun h -> exists (aconv h) (hyp th)) hs &&
@@ -14,33 +19,59 @@ let check_export_results () =
   let x = mk_var("x",bool_ty) in
   let a = mk_const("pftExport_shadow$first",[]) in
   let b = mk_const("pftExport_shadow$second",[]) in
+  (* |- first = first /\ (!x. x = x) /\ second = second: a specification
+     whose inner binder shadows a witness variable *)
   check_saved "pftExport_shadow$SHADOW" []
     (conj (mk_eq(a,a)) (conj (forall_bool x (mk_eq(x,x))) (mk_eq(b,b))));
+  (* |- T, from a specification whose constant doesn't occur in it;
+     |- unused = unused for that constant *)
   check_saved "pftExport_vacuous$VACUOUS" [] (mk_const("T",[]));
   check_refl "pftExport_vacuous$UNUSED_REFL"
     (mk_const("pftExport_vacuous$unused",[]));
   let v = mk_var("pftExport_overlap$first",bool_ty) in
   let first = mk_const("pftExport_overlap$first",[]) in
+  (* |- !first. first = first, where the bound variable has the new
+     constant's full name and the body uses the constant *)
   check_saved "pftExport_overlap$OVERLAP" []
     (forall_bool v (mk_eq(first,first)));
   let p = mk_eq(x,x) in
   let check name = check_saved ("pftExport_hypotheses$" ^ name) in
+  (* Each kernel rule must carry its premises' hypotheses into the result.
+     With p = (x = x):
+     CONJ_LEFT, CONJ_RIGHT: p |- p /\ p. The same sequent on purpose: one is
+       CONJ (ASSUME p) (REFL x), the other CONJ (REFL x) (ASSUME p), so
+       the hypothesis comes from the left premise in one, the right in the
+       other. *)
   check "CONJ_LEFT" [p] (conj p p);
   check "CONJ_RIGHT" [p] (conj p p);
   let truth = mk_const("T",[]) in
+  (* MP: T |- x = x. The implication is ADD_ASSUM T (DISCH T (REFL x)), that
+     is T |- T ==> x = x, so the hypothesis T comes from the implication. *)
   check "MP" [truth] p;
+  (* DISJ_CASES: p, p ==> p |- p; both hypotheses come from the disjunction,
+     p |- p \/ p with p ==> p added by ADD_ASSUM, and neither from the cases *)
   check "DISJ_CASES" [p;imp p p] p;
   let y = mk_var("y",bool_ty) in
+  (* CHOOSE: (!y. (\y. T) y ==> p) |- p; the hypothesis comes from the
+     existential premise, added with ADD_ASSUM *)
   check "CHOOSE" [forall_bool y (imp (mk_comb(mk_abs(y,truth),y)) p)] p;
+  (* |- LET (\x. T) = LET (\x. T), at LET : (bool -> bool) -> bool -> bool *)
   let let_tm = inst [bool_ty,mk_vartype "'a";bool_ty,mk_vartype "'b"]
     (mk_const("LET",[])) in
   check_refl "pftExport_binder$LET" (mk_comb(let_tm,mk_abs(x,truth)));;
 
 let check_oracle_results () =
   let v name = mk_var(name,bool_ty) in
+  (* q, r |- p: an oracle theorem's hypotheses *)
   check_saved "oracle_hyps$hyps" [v "q";v "r"] (v "p");
+  (* (\y. x = x') = (\y. x = x') |- p, with x' a free variable named
+     x pft%0: the hypothesis's binder, renamed towards x, must capture
+     neither free variable *)
   let lam = mk_abs(v "y",mk_eq(v "x",v "x pft%0")) in
   check_saved "oracle_hyps$capture" [mk_eq(lam,lam)] (v "p");
+  (* |- c = c at c : bool and c : bool -> bool, for a polymorphic constant;
+     then |- T = T, proved through instances of a constant that was deleted
+     before the theorem was saved *)
   let c = mk_const("oracle_hyps$c",[]) in
   List.iter (fun (name,ty) ->
     check_refl ("oracle_hyps$" ^ name) (inst [ty,mk_vartype "'a"] c))
@@ -51,6 +82,8 @@ let term_kind_check () =
   let f = mk_var("f",mk_fun_ty bool_ty bool_ty) in
   let x = mk_var("x",bool_ty) in
   let y = mk_var("y",bool_ty) in
+  (* |- t = t for each t: (\f. \f. x), (\f. T) and (\x. \y. x), where
+     bound variables shadow, are unused, or nest *)
   List.iter (fun (name,tm) -> check_refl ("pft_term_kinds$" ^ name) tm)
     [("RENAME",mk_abs(f,mk_abs(f,x)));
      ("SPEC",mk_abs(f,mk_const("T",[])));
@@ -59,6 +92,8 @@ let term_kind_check () =
 
 let check_identity_results () =
   let n = mk_comb(mk_const("~",[]),mk_const("T",[])) in
+  (* ~T |- ~T, then |- !a. stream_abs (stream_rep a) = a for a type
+     definition's abstraction and representation constants *)
   check_saved "identity_negation$NEGATION" [n] n;
   let stream = mk_type("identity_type_names$stream",[]) in
   let a = mk_var("a",stream) in
@@ -91,6 +126,11 @@ let check_compute_results () =
   let y = mk_var("y",cv) in
   let addc = mk_mconst("Cexp_add",mk_fun_ty cv (mk_fun_ty cv cv)) in
   let add a b = mk_comb(mk_comb(addc,a),b) in
+  (* cv computations, with cv numerals written as numbers:
+     CAPTURE: |- LET (\x. LET (\y. x + y) 4) 2 = 6
+     CLOSURE_NESTED: |- LET (\x. 4 + x) 2 = 6
+     LARGE_NUMERAL: |- n = n for n = 2 ** 64
+     KIND_CAPTURE: |- (\f. \f. kind_x) = (\f. \f. kind_x) *)
   let nested = let_tm x (let_tm y (add x y) (cvnum 4)) (cvnum 2) in
   check "CAPTURE" nested (cvnum 6);
   check "CLOSURE_NESTED"

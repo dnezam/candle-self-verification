@@ -10,9 +10,8 @@ built independently in Candle.
 
 ## What you need
 
-- A Candle checkout whose `candle/pft/replay.ml` reads PFT 0.1.0
-  ([CakeML/candle#25](https://github.com/CakeML/candle/pull/25)), built with
-  its `./build-instructions.sh`.
+- A Candle checkout at `master` (from `a9aeaa1`, which reads PFT 0.1.0), built
+  with its `./build-instructions.sh`.
 - A HOL4 checkout to test, built with the trace kernel on a Poly/ML that
   provides `exportSmall`, plus the converter driver:
 
@@ -48,6 +47,6 @@ output is in `candle.log` in the fixture directory.
 
 ## Tested revisions
 
-Candle `04ea204ec81f861af8316058335246b0de410429`, HOL
+Candle `a9aeaa1dffd50f7cfeed811db6ee61f98e2234da`, HOL
 `179b872513cbdb51b8d922b3177e115a997cfb1b`, Poly/ML
 [`digama0/polyml@95414c58`](https://github.com/digama0/polyml/commit/95414c58c36f2cce2c1838bc4ec0716ddfe6c540).
