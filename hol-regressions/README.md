@@ -11,10 +11,22 @@ built independently in Candle.
 ## What you need
 
 - A Candle checkout at `master` (from `a9aeaa1`, which reads PFT 0.1.0), built
-  with its `./build-instructions.sh`. That runs an x86-64 CakeML binary; on an
-  ARM64 host, cross-compile it with the toolchain
-  [the historical baseline](../docs/historical-baseline.md) names and make
-  `candle/build/cake` a script that runs it under user-mode QEMU.
+  with its `./build-instructions.sh`. That builds and runs an x86-64 CakeML
+  binary, so on an ARM64 host the script stops at `make`. There, run its
+  remaining steps by hand in `candle/build`, with the cross compiler and QEMU
+  that [the historical baseline](../docs/historical-baseline.md) names:
+
+  ```sh
+  cc='python-zig cc -target x86_64-linux-musl -static'
+  $cc -DEVAL -O2 -c cake.S -o cake.o
+  $cc -DEVAL -O2 -include sys/time.h -c basis_ffi.c -o basis_ffi.o
+  $cc cake.o basis_ffi.o -o cake.x86 -lm
+  printf '#!/bin/sh\nexec %s "$(dirname "$0")/cake.x86" "$@"\n' \
+    /path/to/qemu-x86_64-static > cake && chmod +x cake
+  ./cake --types < /dev/null > types.txt 2>&1
+  python3 ../insulate.py types.txt insulate.ml
+  cat ../chdir_to_root.ml >> candle_boot.ml
+  ```
 - A HOL4 checkout to test, built with the trace kernel on a Poly/ML that
   provides `exportSmall`, plus the converter driver:
 

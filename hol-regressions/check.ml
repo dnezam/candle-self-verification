@@ -100,9 +100,9 @@ let check_identity_results () =
   (* NEGATION: ~T |- ~T, from NOT_INTRO applied to ASSUME ~T, a negation
      rather than an implication to F;
      RESULT: |- !a. stream_abs (stream_rep a) = a, in a theory that also
-     declares stream_abs' and stream_rep' and a retired type's renamed
-     _abs/_rep constants, all clashing with the names synthesized for the
-     bijections *)
+     declares stream_abs' and stream_rep', and, after deleting a type
+     retired, new constants under the names the converter would synthesize
+     for retired's bijections: each takes a name the converter might pick *)
   check_saved "identity_negation$NEGATION" [n] n;
   let stream = mk_type("identity_type_names$stream",[]) in
   let a = mk_var("a",stream) in
