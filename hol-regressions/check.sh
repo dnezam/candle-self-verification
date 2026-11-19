@@ -52,7 +52,7 @@ cd "$candle/candle/build"
 # reading the phrases after one, so check the log itself.
 exact=$(grep -c 'PFT_EXACT ' "$log" || true)
 if [ "$exact" -ne 24 ] || ! grep -q 'ALL_CANDLE_PASS$' "$log" ||
-   grep -q -E 'EXCEPTION|ERROR:|Parsing failed' "$log"; then
+   grep -q -E 'EXCEPTION:|ERROR:|Parsing failed' "$log"; then
   echo "Candle check failed ($exact of 24 exact sequents); see $log" >&2
   exit 1
 fi

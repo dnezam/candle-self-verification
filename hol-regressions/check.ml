@@ -69,7 +69,7 @@ let check_oracle_results () =
      neither free variable *)
   let lam = mk_abs(v "y",mk_eq(v "x",v "x pft%0")) in
   check_saved "oracle_hyps$capture" [mk_eq(lam,lam)] (v "p");
-  (* |- c = c at c : bool and c : bool -> bool, for a polymorphic constant;
+  (* |- c = c for c : 'a -> 'a at 'a = bool and at 'a = bool -> bool;
      then |- T = T, proved through instances of a constant that was deleted
      before the theorem was saved *)
   let c = mk_const("oracle_hyps$c",[]) in
@@ -82,8 +82,12 @@ let term_kind_check () =
   let f = mk_var("f",mk_fun_ty bool_ty bool_ty) in
   let x = mk_var("x",bool_ty) in
   let y = mk_var("y",bool_ty) in
-  (* |- t = t for each t: (\f. \f. x), (\f. T) and (\x. \y. x), where
-     bound variables shadow, are unused, or nest *)
+  (* |- t = t for each t:
+     RENAME: (\f. \f. x), from a proof that keeps the application f x
+       reachable (through SUBST) while it shares its children with \f. x;
+     SPEC: (\f. T), likewise for f T, through a specification;
+     EMPTY_BINDER: (\x. \y. x) with both binders named "", a legal
+       variable name *)
   List.iter (fun (name,tm) -> check_refl ("pft_term_kinds$" ^ name) tm)
     [("RENAME",mk_abs(f,mk_abs(f,x)));
      ("SPEC",mk_abs(f,mk_const("T",[])));
@@ -127,10 +131,15 @@ let check_compute_results () =
   let addc = mk_mconst("Cexp_add",mk_fun_ty cv (mk_fun_ty cv cv)) in
   let add a b = mk_comb(mk_comb(addc,a),b) in
   (* cv computations, with cv numerals written as numbers:
-     CAPTURE: |- LET (\x. LET (\y. x + y) 4) 2 = 6
-     CLOSURE_NESTED: |- LET (\x. 4 + x) 2 = 6
-     LARGE_NUMERAL: |- n = n for n = 2 ** 64
-     KIND_CAPTURE: |- (\f. \f. kind_x) = (\f. \f. kind_x) *)
+     CAPTURE: |- LET (\x. LET (\y. x + y) 4) 2 = 6, where HOL names both
+       binders x though the inner body uses both, so emission must pick a
+       fresh inner name;
+     CLOSURE_NESTED: |- LET (\x. 4 + x) 2 = 6 and
+     LARGE_NUMERAL: |- n = n for n = 2 ** 64, each built by
+       beta-substituting a value beneath a binder;
+     KIND_CAPTURE: |- (\f. \f. kind_x) = (\f. \f. kind_x), substituting
+       \f. kind_x while the proof keeps f kind_x, which has the same
+       children: capture analysis must not take one for the other *)
   let nested = let_tm x (let_tm y (add x y) (cvnum 4)) (cvnum 2) in
   check "CAPTURE" nested (cvnum 6);
   check "CLOSURE_NESTED"
