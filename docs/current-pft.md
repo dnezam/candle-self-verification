@@ -3,41 +3,31 @@
 This harness checks a pinned current HOL producer through binary PFT conversion,
 target selection, and two readers. Eleven independently constructed sequents
 must agree with replay in four fresh processes: separate-file and merged HOL
-replay, and separate-file and merged Candle replay. The historical harness and
-`pins.json` remain unchanged as a regression reference.
+replay, and separate-file and merged Candle replay. Both harnesses use the
+Poly/ML runtime pinned in [`pins.json`](../pins.json). The historical baseline
+retains its own HOL and Candle revisions.
 
 ## Revisions and contract
 
 | Component | Revision |
 | --- | --- |
-| HOL producer | `8d60d43356361dd7a21a9e5cecf5fe8ffe33c4d7` |
-| HOL converter and reader | `8d60d43356361dd7a21a9e5cecf5fe8ffe33c4d7` |
-| Candle reader | `646e3a2afbf20a8fcfdb15cf7562ee321b74791c` |
-| Poly/ML and CakeML bootstrap | Unchanged checksum-verified pins in [`pins.json`](../pins.json) |
+| HOL producer, converter and reader | [`179b872513`](https://github.com/HOL-Theorem-Prover/HOL/commit/179b872513cbdb51b8d922b3177e115a997cfb1b) |
+| Candle reader | [`a9aeaa1d`](https://github.com/CakeML/candle/commit/a9aeaa1dffd50f7cfeed811db6ee61f98e2234da) |
+| Poly/ML | [`95414c58`](https://github.com/digama0/polyml/commit/95414c58c36f2cce2c1838bc4ec0716ddfe6c540) (`exportSmall-5.9.2`) |
+| CakeML bootstrap for current Candle | [Job 3682, x86-64](https://cakeml.org/regression/artefacts/3682/cake-x64.tar.gz), SHA-256 `3b3c0d82f607261336e47f12b1719eedb6c312fba9d0975e9e7f508e2f8e95a1` |
 
-The producer and converter use the same revision of
-[HOL #2091](https://github.com/HOL-Theorem-Prover/HOL/pull/2091).
-The Candle reader is the unmodified reader merged into master in
-[Candle #18](https://github.com/CakeML/candle/pull/18).
+The producer writes TR32 traces with a six-field root carrying export-time
+signature metadata. The converter uses that metadata to give retired local
+identities private names. Its input contract requires distinct substitution
+redexes. The raw audit checks the anonymous dependency, nested proof marks,
+definitions and computation before conversion.
 
-The supported interchange is `PFT\0`, unsigned LEB128 integer version **1**,
-then ruleset `hol4` or `candle`. Four namespaces (`ty`, `tm`, `th`, `ci`) have
-independent IDs and four footer bounds. `COMPUTE_INIT` creates a context object;
-`COMPUTE` names that object. A standalone Candle compute preamble exports the
-helper equations, and each consuming theory creates its own context.
-
-The experimental `0.1.0` string header and three-namespace ambient-compute format
-are rejected. JSON Lines is writer-only diagnostic output. HOL replay requires
-`hol4`; Candle replay requires `candle`; merge rejects mixed rulesets before
-opening its output.
-
-The raw producer emits TR32 with a six-field identity-aware root containing
-export-time live and imported signature metadata. Its immutable `{name, epoch}`
-kernel identifiers differ from the historical baseline's reference layout.
-The converter gives retired local identities distinct private names. The parser
-also decodes current `Mark` constructors and the tagged `NONE` in `GEN_ABS`.
-Historical raw identifiers are explicitly rejected. Binary PFT v1 remains
-compatible with the historical reference outputs.
+The portable binary header contains `PFT\0`, the version string `0.1.0`, and
+the ruleset (`hol4` or `candle`). The footer gives bounds for three ID spaces:
+types, terms and theorems. `COMPUTE_INIT` installs the computation state for
+subsequent `COMPUTE` steps, including steps in later files. For Candle, the
+driver inserts a shared compute preamble after the converted `cv` theory.
+See the [format specification](https://github.com/HOL-Theorem-Prover/HOL/blob/179b872513cbdb51b8d922b3177e115a997cfb1b/src/postkernel/prooftrace/pft-format.md).
 
 ## Candle invocation
 
@@ -58,33 +48,58 @@ It checks their revisions; dirty converter/reader sources require an explicit
 `--allow-dirty` development option. The producer needs a matching holbuild
 manifest or a clean Git checkout; a declared revision alone is insufficient.
 
-Build the current producer with holbuild 0.11.5 or later and the pinned tracing
-Poly/ML. The historical helper can prepare the checksum-verified prerequisites:
+Set `PREREQUISITES` to an absolute build directory and `PRODUCER_HOL` to a
+clean HOL checkout at the revision above. Build tracing HOL with the pinned
+Poly/ML. The fixture theories depend on `cv`, which the `upto-hol` sequence builds.
 
 ```sh
-python3 baseline.py bootstrap --build-dir "$PWD/build/prerequisites"
-python3 baseline.py poly --build-dir "$PWD/build/prerequisites"
-HOLBUILD_POLY="$PWD/build/prerequisites/polyml/bin/poly" \
-HOLBUILD_POLYC="$PWD/build/prerequisites/polyml/bin/polyc" \
-  holbuild --source-dir fixtures/current buildhol --trknl
+python3 baseline.py poly --build-dir "$PREREQUISITES"
+(
+  cd "$PRODUCER_HOL"
+  export PATH="$PREREQUISITES/polyml/bin:$PATH"
+  poly < tools/smart-configure.sml
+  bin/build --trknl --seq=tools/sequences/upto-hol
+)
+CONVERTER_HOL="$PRODUCER_HOL"
 ```
 
-The last command prints the producer HOL directory. Its standard `upto-hol`
-build includes the `cv` dependencies needed by the fixtures.
-
-The reader source is loaded at runtime, so the same pinned Candle bootstrap
-can be reused with the master reader. Build it using the checked helper:
+Build Candle in a fresh checkout at `CANDLE_CHECKOUT`. Its
+[build instructions](https://github.com/CakeML/candle/blob/a9aeaa1dffd50f7cfeed811db6ee61f98e2234da/build-instructions.sh)
+specify CakeML job 3682. The historical runtime uses an older word-shift
+interface and cannot load this version of Candle. The commands below verify
+the archive before extracting it on both Linux host architectures. On ARM64,
+install [Zig and QEMU](historical-baseline.md#running) and set `QEMU` to
+the absolute path of `qemu-x86_64-static`.
 
 ```sh
-python3 baseline.py reader --build-dir "$PWD/build/prerequisites"
-cp -a build/prerequisites/candle-51781e5ad891f5792bcf34ac1ea18c1ffd1b6425/candle/build \
-  "$CANDLE_CHECKOUT/candle/build"
+(
+  set -e
+  cd "$CANDLE_CHECKOUT"
+  mkdir -p candle/build
+  cd candle/build
+  curl -fLO https://cakeml.org/regression/artefacts/3682/cake-x64.tar.gz
+  echo '3b3c0d82f607261336e47f12b1719eedb6c312fba9d0975e9e7f508e2f8e95a1  cake-x64.tar.gz' | sha256sum -c -
+  tar xzf cake-x64.tar.gz --strip-components=1
+  patch cake.S ../cake.S.patch
+  patch basis_ffi.c ../basis_ffi.c.patch
+  case "$(uname -m)" in
+    x86_64)
+      make
+      ./cake --types </dev/null >types.txt 2>&1
+      ;;
+    aarch64)
+      cc_x64() { python-zig cc -target x86_64-linux-musl -static "$@"; }
+      cc_x64 -O2 -DEVAL -c cake.S -o cake.o
+      cc_x64 -O2 -DEVAL -include sys/time.h -c basis_ffi.c -o basis_ffi.o
+      cc_x64 cake.o basis_ffi.o -o cake -lm
+      "$QEMU" ./cake --types </dev/null >types.txt 2>&1
+      ;;
+    *) echo "This recipe requires x86-64 or ARM64 Linux." >&2; exit 1 ;;
+  esac
+  python3 ../insulate.py types.txt insulate.ml
+  cat ../chdir_to_root.ml >> candle_boot.ml
+)
 ```
-
-The destination must not already exist. On ARM64, add the cross-compiler and
-QEMU arguments from [the historical baseline](historical-baseline.md#running)
-to the `reader` command. That helper verifies the bootstrap archive before
-building; copying the runtime does not copy or replace the reader source.
 
 ## Running
 
@@ -103,12 +118,14 @@ Each Candle process uses `CML_HEAP_SIZE=8000`. Native x86-64 execution has not
 been tested here. Override revisions explicitly with `--producer-rev`,
 `--converter-rev`, and `--candle-rev` when checking another port.
 
-The HOL CLI also works independently of these fixed regression fixtures:
+To use the HOL CLI independently, build its modules in the converter checkout first:
 
 ```sh
-/path/to/HOL/src/postkernel/prooftrace/pft emit --ruleset candle \
+cd "$CONVERTER_HOL"
+bin/Holmake --poly_not_hol -C src/postkernel/prooftrace PFTCLI.uo
+src/postkernel/prooftrace/pft.sh emit --ruleset candle \
   --trace inputTheory.tr.gz --output input.pft.bin
-/path/to/HOL/src/postkernel/prooftrace/pft merge --ruleset candle \
+src/postkernel/prooftrace/pft.sh merge --ruleset candle \
   --order dependency-order.txt --target 'input$THEOREM' --output selected.pft.bin
 ```
 
@@ -140,29 +157,22 @@ allowed-axiom policy or a strict certificate manifest. Replay trusts the kernel,
 reader, bootstrap, Poly/ML and execution environment.
 
 `result.json` records source/runtime/fixture hashes, raw TR32 headers, portable
-artifact hashes, inventories, completion markers and failures. `commands.log`
+artifact hashes, inventories, completion markers and failures.
+`configured_poly_sha256` identifies the executable at the Poly/ML path recorded
+by the producer build. If that executable is unavailable at its configured
+absolute path, the field is null.
+`commands.log`
 records commands; each stage has its own log. A zero REPL exit status alone
 never passes the driver.
 
 ## Validation
 
-Run the integration checks above and the focused suites:
+Run the four replay sessions with `current.py` as above. The focused Python
+tests check the driver’s provenance and completion checks:
 
 ```sh
 python3 -m unittest -v test_baseline test_current
-HOLSELFTESTLEVEL=1 "$CONVERTER_HOL/bin/Holmake" \
-  -C "$CONVERTER_HOL/src/postkernel/prooftrace"
 ```
-
-The HOL suite covers malformed streams, dependencies, type definitions and
-compute contexts. The current integration checks Candle through all eleven
-exact sequents in separate and merged replay.
-
-The producer toolchain builds with `holbuild buildhol --trknl` using the pinned
-tracing Poly/ML. The same HOL revision passed the standard, experimental,
-Moscow ML and OpenTheory CI jobs in
-[run 40596371327](https://github.com/HOL-Theorem-Prover/HOL/actions/runs/40596371327).
-Candle's CRIU regression suite was not run.
 
 The merger reuses output IDs after their final use. Input-ID reuse after deletion,
 side-file `Exported` proofs and deleted proofs/tracing gaps remain unsupported.
