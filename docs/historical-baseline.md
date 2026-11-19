@@ -12,8 +12,8 @@ Complete commits and download SHA-256 values are in [`pins.json`](../pins.json).
 The HOL and Candle revisions preserve the historical pipeline. Poly/ML is
 shared with the current integration and now uses `exportSmall-5.9.2`; the
 original baseline used `5612ede0c13a4efd64293576b037c20b86a26a30`.
-That original runtime and its reference outputs remain reproducible at
-[the historical baseline commit](https://github.com/dnezam/candle-self-verification/tree/54561f2ca4fa7d5bfa3b1eac33302af695f9527e).
+To reproduce the original run, check out [the recorded driver and fixtures](https://github.com/dnezam/candle-self-verification/tree/9528f9240dacbdbaa6884c212f97b9439f4fdf0b)
+and compare the outputs with the [archived reference hashes](https://github.com/dnezam/candle-self-verification/blob/54561f2ca4fa7d5bfa3b1eac33302af695f9527e/docs/reference-results.json).
 
 | Component | Revision | Role |
 | --- | --- | --- |
