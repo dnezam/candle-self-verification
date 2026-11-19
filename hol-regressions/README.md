@@ -11,7 +11,10 @@ built independently in Candle.
 ## What you need
 
 - A Candle checkout at `master` (from `a9aeaa1`, which reads PFT 0.1.0), built
-  with its `./build-instructions.sh`.
+  with its `./build-instructions.sh`. That runs an x86-64 CakeML binary; on an
+  ARM64 host, cross-compile it with the toolchain
+  [the historical baseline](../docs/historical-baseline.md) names and make
+  `candle/build/cake` a script that runs it under user-mode QEMU.
 - A HOL4 checkout to test, built with the trace kernel on a Poly/ML that
   provides `exportSmall`, plus the converter driver:
 
@@ -47,6 +50,7 @@ output is in `candle.log` in the fixture directory.
 
 ## Tested revisions
 
+On an ARM64 host, with Candle's x86-64 binary under QEMU:
 Candle `a9aeaa1dffd50f7cfeed811db6ee61f98e2234da`, HOL
 `179b872513cbdb51b8d922b3177e115a997cfb1b`, Poly/ML
 [`digama0/polyml@95414c58`](https://github.com/digama0/polyml/commit/95414c58c36f2cce2c1838bc4ec0716ddfe6c540).

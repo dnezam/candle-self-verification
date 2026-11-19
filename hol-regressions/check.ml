@@ -55,7 +55,8 @@ let check_export_results () =
   (* CHOOSE: (!y. (\y. T) y ==> p) |- p; the hypothesis comes from the
      existential premise, added with ADD_ASSUM *)
   check "CHOOSE" [forall_bool y (imp (mk_comb(mk_abs(y,truth),y)) p)] p;
-  (* |- LET (\x. T) = LET (\x. T), at LET : (bool -> bool) -> bool -> bool *)
+  (* |- LET (\x. T) = LET (\x. T), at LET : (bool -> bool) -> bool -> bool,
+     from GEN_ABS with LET as the supplied binder constant *)
   let let_tm = inst [bool_ty,mk_vartype "'a";bool_ty,mk_vartype "'b"]
     (mk_const("LET",[])) in
   check_refl "pftExport_binder$LET" (mk_comb(let_tm,mk_abs(x,truth)));;
@@ -96,8 +97,12 @@ let term_kind_check () =
 
 let check_identity_results () =
   let n = mk_comb(mk_const("~",[]),mk_const("T",[])) in
-  (* ~T |- ~T, then |- !a. stream_abs (stream_rep a) = a for a type
-     definition's abstraction and representation constants *)
+  (* NEGATION: ~T |- ~T, from NOT_INTRO applied to ASSUME ~T, a negation
+     rather than an implication to F;
+     RESULT: |- !a. stream_abs (stream_rep a) = a, in a theory that also
+     declares stream_abs' and stream_rep' and a retired type's renamed
+     _abs/_rep constants, all clashing with the names synthesized for the
+     bijections *)
   check_saved "identity_negation$NEGATION" [n] n;
   let stream = mk_type("identity_type_names$stream",[]) in
   let a = mk_var("a",stream) in
@@ -134,9 +139,9 @@ let check_compute_results () =
      CAPTURE: |- LET (\x. LET (\y. x + y) 4) 2 = 6, where HOL names both
        binders x though the inner body uses both, so emission must pick a
        fresh inner name;
-     CLOSURE_NESTED: |- LET (\x. 4 + x) 2 = 6 and
-     LARGE_NUMERAL: |- n = n for n = 2 ** 64, each built by
-       beta-substituting a value beneath a binder;
+     CLOSURE_NESTED: |- LET (\x. 4 + x) 2 = 6, built by beta-substituting
+       4 beneath the binder;
+     LARGE_NUMERAL: |- n = n for n = 2 ** 64, past the machine-word range;
      KIND_CAPTURE: |- (\f. \f. kind_x) = (\f. \f. kind_x), substituting
        \f. kind_x while the proof keeps f kind_x, which has the same
        children: capture analysis must not take one for the other *)
