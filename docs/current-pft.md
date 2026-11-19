@@ -63,12 +63,13 @@ python3 baseline.py poly --build-dir "$PREREQUISITES"
 CONVERTER_HOL="$PRODUCER_HOL"
 ```
 
-Build Candle in the clean checkout at `CANDLE_CHECKOUT`. On native x86-64,
-run its [build instructions](https://github.com/CakeML/candle/blob/a9aeaa1dffd50f7cfeed811db6ee61f98e2234da/build-instructions.sh).
-The historical runtime uses an older CakeML word-shift interface and cannot load
-this version of Candle. On ARM64, the following commands build the current
-runtime with Zig and QEMU (see [tool installation](historical-baseline.md#running)).
-Set `QEMU` to the absolute path of `qemu-x86_64-static`.
+Build Candle in a fresh checkout at `CANDLE_CHECKOUT`. Its
+[build instructions](https://github.com/CakeML/candle/blob/a9aeaa1dffd50f7cfeed811db6ee61f98e2234da/build-instructions.sh)
+specify CakeML job 3682. The historical runtime uses an older word-shift
+interface and cannot load this version of Candle. The commands below verify
+the archive before extracting it on both Linux host architectures. On ARM64,
+install [Zig and QEMU](historical-baseline.md#running) and set `QEMU` to
+the absolute path of `qemu-x86_64-static`.
 
 ```sh
 (
@@ -81,11 +82,20 @@ Set `QEMU` to the absolute path of `qemu-x86_64-static`.
   tar xzf cake-x64.tar.gz --strip-components=1
   patch cake.S ../cake.S.patch
   patch basis_ffi.c ../basis_ffi.c.patch
-  cc_x64() { python-zig cc -target x86_64-linux-musl -static "$@"; }
-  cc_x64 -O2 -DEVAL -c cake.S -o cake.o
-  cc_x64 -O2 -DEVAL -include sys/time.h -c basis_ffi.c -o basis_ffi.o
-  cc_x64 cake.o basis_ffi.o -o cake -lm
-  "$QEMU" ./cake --types </dev/null >types.txt 2>&1
+  case "$(uname -m)" in
+    x86_64)
+      make
+      ./cake --types </dev/null >types.txt 2>&1
+      ;;
+    aarch64)
+      cc_x64() { python-zig cc -target x86_64-linux-musl -static "$@"; }
+      cc_x64 -O2 -DEVAL -c cake.S -o cake.o
+      cc_x64 -O2 -DEVAL -include sys/time.h -c basis_ffi.c -o basis_ffi.o
+      cc_x64 cake.o basis_ffi.o -o cake -lm
+      "$QEMU" ./cake --types </dev/null >types.txt 2>&1
+      ;;
+    *) echo "This recipe requires x86-64 or ARM64 Linux." >&2; exit 1 ;;
+  esac
   python3 ../insulate.py types.txt insulate.ml
   cat ../chdir_to_root.ml >> candle_boot.ml
 )
