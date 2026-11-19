@@ -113,7 +113,7 @@
       "ruleset": "hol4"
     }
   },
-  "driver_sha256": "1e1f44baa57ff959daa14e705d2da38f016862d3f125aa356aaf9a1d2910bd79",
+  "driver_sha256": "46ab28c7d44fd53389c19070f83c931d97376e7f8ffedd65170657a1efa7db6a",
   "fixture_sha256": {
     "audit-raw.sml": "8942103673ca7118818a5d1ad4bc1946197d0ce1fde7933bf64162f37e520a6f",
     "check-results.ml": "4b93fadb26efa2fcf3f86aca67ecd0928a3bfa1fcd209298d173dcef9ae2a864",
@@ -167,7 +167,8 @@
   "sources": {
     "producer": "179b872513cbdb51b8d922b3177e115a997cfb1b",
     "converter": "179b872513cbdb51b8d922b3177e115a997cfb1b",
-    "candle": "a9aeaa1dffd50f7cfeed811db6ee61f98e2234da"
+    "candle": "a9aeaa1dffd50f7cfeed811db6ee61f98e2234da",
+    "polyml": "95414c58c36f2cce2c1838bc4ec0716ddfe6c540"
   },
   "pft_sha256": {
     "candle/Canon_Port_Context.pft.bin": "bf7ad3005a78bce61dbc80736a873e7ada4e22817af9483839d85a91b78f6900",
@@ -232,5 +233,6 @@
     "hol4/relation.pft.bin": "8b0d1f63f22783d5ac4997ec1c664b61a7deafe1ff4184c3c472033e74c02dda",
     "hol4/sat.pft.bin": "69cb487a588bebab0a58fdb6d7daf2c4642e495e89874cad825fb2a816e4d9fe",
     "hol4/sum.pft.bin": "414a516885241603a7edb1e4e4a4e875001045e0fa6750b37cd10e47713a1921"
-  }
+  },
+  "configured_poly_sha256": "5dad82ba1d87d2cad2fb8ec5931515c41bcb5ed4b38041f485f4ab63b44b2198"
 }

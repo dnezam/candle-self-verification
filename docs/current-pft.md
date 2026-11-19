@@ -157,7 +157,11 @@ allowed-axiom policy or a strict certificate manifest. Replay trusts the kernel,
 reader, bootstrap, Poly/ML and execution environment.
 
 `result.json` records source/runtime/fixture hashes, raw TR32 headers, portable
-artifact hashes, inventories, completion markers and failures. `commands.log`
+artifact hashes, inventories, completion markers and failures.
+`configured_poly_sha256` identifies the executable at the Poly/ML path recorded
+by the producer build. If that executable is unavailable at its configured
+absolute path, the field is null.
+`commands.log`
 records commands; each stage has its own log. A zero REPL exit status alone
 never passes the driver.
 

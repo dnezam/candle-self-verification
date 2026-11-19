@@ -184,6 +184,7 @@ class CurrentRun:
             'val _ = print ("PRODUCER_KERNEL: " ^ Thm.kernelid ^ "\\n");\n'
             'val _ = print ("PRODUCER_POLYML_VERSION: " ^\n'
             '  Int.toString PolyML.Compiler.compilerVersionNumber ^ "\\n");\n'
+            'val _ = print ("PRODUCER_POLY: " ^ Systeml.POLY ^ "\\n");\n'
             f'val _ = use {json.dumps(str(self.fixtures / "produce.sml"))};\n'
         )
         self.hol_run(script, "produce.log", cwd=raw)
@@ -191,6 +192,9 @@ class CurrentRun:
         if lines.count("CURRENT_FIXTURES_PRODUCED") != 1:
             raise ValueError("producer did not finish all current fixtures")
         self.report["producer_runtime"] = [line for line in lines if line.startswith("PRODUCER_")]
+        poly = Path(next(line.removeprefix("PRODUCER_POLY: ") for line in lines
+                         if line.startswith("PRODUCER_POLY: ")))
+        self.report["configured_poly_sha256"] = sha256(poly) if poly.is_absolute() and poly.is_file() else None
 
     def convert(self) -> None:
         traces: dict[str, Path] = {}
