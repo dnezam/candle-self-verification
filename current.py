@@ -13,9 +13,6 @@ import subprocess
 import sys
 import tempfile
 
-PRODUCER_REV = "179b872513cbdb51b8d922b3177e115a997cfb1b"
-CONVERTER_REV = "179b872513cbdb51b8d922b3177e115a997cfb1b"
-CANDLE_REV = "a9aeaa1dffd50f7cfeed811db6ee61f98e2234da"
 TARGETS = [
     ("currentAnonB", "original"),
     ("currentAnonB", "cross_anon"),
@@ -106,13 +103,12 @@ class CurrentRun:
     def __init__(self, args: argparse.Namespace) -> None:
         self.args = args
         self.root = Path(__file__).resolve().parent
-        self.fixtures = self.root / "fixtures/current"
+        self.fixtures = self.root / "fixtures"
         self.build = args.build_dir.resolve()
         self.build.mkdir(parents=True, exist_ok=True)
         self.hol = args.hol.resolve()
         self.converter = args.converter.resolve()
         self.candle = args.candle.resolve()
-        self.runner = shlex.split(args.runner)
         self.report: dict[str, object] = {"replay_verified": False, "completed": []}
 
     def run(self, command: list[str], *, cwd: Path, output: Path,
@@ -121,8 +117,6 @@ class CurrentRun:
             stream.write(f"cd {shlex.quote(str(cwd))}\n")
             if env:
                 stream.write(" ".join(f"{key}={shlex.quote(value)}" for key, value in env.items()) + " ")
-            if env:
-                stream.write(shlex.join([f"{key}={value}" for key, value in env.items()]) + " ")
             stream.write(shlex.join(command))
             if stdin:
                 stream.write(" < " + shlex.quote(str(stdin)))
@@ -153,9 +147,12 @@ class CurrentRun:
                                  allow_dirty=self.args.allow_dirty),
         }
         self.report["development_allow_dirty"] = self.args.allow_dirty
+        build = self.candle / "candle/build"
         self.report["runtime_sha256"] = {
             "hol": sha256(self.hol / "bin/hol"),
-            "candle": sha256(self.candle / "candle/build/cake"),
+            # On ARM64, build-candle.sh makes `cake` a QEMU wrapper for `cake.x86`.
+            "candle": {path.name: sha256(path) for path in (build / "cake", build / "cake.x86")
+                       if path.is_file()},
         }
         self.report["fixture_sha256"] = {
             path.name: sha256(path) for path in sorted(self.fixtures.iterdir()) if path.is_file()
@@ -169,7 +166,7 @@ class CurrentRun:
         self.report["candle_source_sha256"] = {
             name: sha256(self.candle / name)
             for name in ("candle/pft/pft.ml", "candle/pft/replay.ml", "candle/pft/misc.ml",
-                         "candle/pft/extract_footer", "candle/build/cake")
+                         "candle/pft/extract_footer")
         }
         self.report["producer_tool_sha256"] = {
             name: sha256(self.hol / "bin" / name)
@@ -234,19 +231,6 @@ class CurrentRun:
             raw_metadata.append({"theory": name, "sha256": sha256(path),
                                  "header": header.hex()})
         self.report["raw_traces"] = raw_metadata
-        inventories = {}
-        for path in sorted(self.build.glob("*/*.pft.bin.inventory")):
-            entry: dict[str, object] = {"commands": {}, "axioms": []}
-            for line in path.read_text().splitlines():
-                fields = line.split("\t")
-                if fields[0] == "RULESET":
-                    entry["ruleset"] = fields[1]
-                elif fields[0] == "COMMAND":
-                    entry["commands"][fields[1]] = int(fields[2])
-                elif fields[0] == "AXIOM":
-                    entry["axioms"].append(fields[2] if fields[1] == "NAMED" else None)
-            inventories[str(path.relative_to(self.build)).removesuffix(".inventory")] = entry
-        self.report["trace_inventory"] = inventories
 
     def replay_hol(self, mode: str, paths: list[Path]) -> None:
         pft = self.converter / "src/postkernel/prooftrace"
@@ -292,7 +276,7 @@ class CurrentRun:
             request = self.build / f"replay-candle-{mode}-input.ml"
             request.write_text(f'#use {json.dumps(str(driver))};;\n')
             log = self.build / f"replay-candle-{mode}.log"
-            self.run(self.runner + [str(self.candle / "candle/build/cake"), "--candle"],
+            self.run([str(self.candle / "candle/build/cake"), "--candle"],
                      cwd=self.candle / "candle/build", output=log, stdin=request,
                      env={"CML_HEAP_SIZE": "8000"})
             verify_checks(log, len(paths), candle=True, anonymous=mode == "multi")
@@ -327,17 +311,17 @@ class CurrentRun:
 
 
 def main() -> None:
+    pins = json.loads((Path(__file__).resolve().parent / "pins.json").read_text())
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hol", type=Path, required=True, help="prebuilt tracing HOL toolchain")
     parser.add_argument("--converter", type=Path, required=True, help="HOL checkout with the ported converter")
     parser.add_argument("--candle", type=Path, required=True, help="Candle checkout with the pinned reader and built runtime")
     parser.add_argument("--build-dir", type=Path, default=Path(__file__).resolve().parent / "build/current")
-    parser.add_argument("--runner", default="", help="optional runner command, e.g. qemu-x86_64-static")
     parser.add_argument("--allow-dirty", action="store_true",
                         help="development only: allow uncommitted converter/reader source")
-    parser.add_argument("--producer-rev", default=PRODUCER_REV)
-    parser.add_argument("--converter-rev", default=CONVERTER_REV)
-    parser.add_argument("--candle-rev", default=CANDLE_REV)
+    parser.add_argument("--producer-rev", default=pins["producer_hol"])
+    parser.add_argument("--converter-rev", default=pins["converter_hol"])
+    parser.add_argument("--candle-rev", default=pins["candle"])
     CurrentRun(parser.parse_args()).execute()
 
 

@@ -12,31 +12,13 @@ built independently in Candle.
 
 ## What you need
 
-- A Candle checkout at `master` (from `a9aeaa1`, which reads PFT 0.1.0), built
-  with its `./build-instructions.sh`. That builds and runs an x86-64 CakeML
-  binary, so on an ARM64 host the script stops at `make`. There, run its
-  remaining steps by hand in `candle/build`, with the cross compiler and QEMU
-  that [the historical baseline](../docs/historical-baseline.md) names:
+Build Poly/ML, the tracing HOL and Candle as the [top-level
+README](../README.md#setup) says, with the HOL checkout to test in place of
+the pinned one if you like. Then build the converter driver in that HOL:
 
-  ```sh
-  cc='python-zig cc -target x86_64-linux-musl -static'
-  $cc -DEVAL -O2 -c cake.S -o cake.o
-  $cc -DEVAL -O2 -include sys/time.h -c basis_ffi.c -o basis_ffi.o
-  $cc cake.o basis_ffi.o -o cake.x86 -lm
-  printf '#!/bin/sh\nexec %s "$(dirname "$0")/cake.x86" "$@"\n' \
-    /path/to/qemu-x86_64-static > cake && chmod +x cake
-  ./cake --types < /dev/null > types.txt 2>&1
-  python3 ../insulate.py types.txt insulate.ml
-  cat ../chdir_to_root.ml >> candle_boot.ml
-  ```
-- A HOL4 checkout to test, built with the trace kernel on a Poly/ML that
-  provides `exportSmall`, plus the converter driver:
-
-  ```sh
-  poly < tools/smart-configure.sml
-  bin/build --trknl --seq=tools/sequences/upto-hol
-  bin/Holmake --poly_not_hol -C src/postkernel/prooftrace PFTCLI.uo
-  ```
+```sh
+(cd /path/to/HOL && bin/Holmake --poly_not_hol -C src/postkernel/prooftrace PFTCLI.uo)
+```
 
 ## Running the check
 
@@ -64,7 +46,5 @@ output is in `candle.log` in the fixture directory.
 
 ## Tested revisions
 
-On an ARM64 host, with Candle's x86-64 binary under QEMU:
-Candle `a9aeaa1dffd50f7cfeed811db6ee61f98e2234da`, HOL
-`179b872513cbdb51b8d922b3177e115a997cfb1b`, Poly/ML
-[`digama0/polyml@95414c58`](https://github.com/digama0/polyml/commit/95414c58c36f2cce2c1838bc4ec0716ddfe6c540).
+The HOL and Candle revisions in [`pins.json`](../pins.json), on an ARM64 host
+with Candle's x86-64 runtime under QEMU.
