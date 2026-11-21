@@ -5,7 +5,9 @@ import subprocess
 import tempfile
 import unittest
 
-from current import PRODUCER_REV, TARGETS, git_source, producer_source, verify_checks
+from current import TARGETS, git_source, producer_source, verify_checks
+
+PRODUCER_REV = "1" * 40
 
 
 class ReplayChecks(unittest.TestCase):
