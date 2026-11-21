@@ -34,7 +34,7 @@ case "$(uname -m)" in
     "${cc[@]}" -O2 -DEVAL -c cake.S -o cake.o
     "${cc[@]}" -O2 -DEVAL -include sys/time.h -c basis_ffi.c -o basis_ffi.o
     "${cc[@]}" cake.o basis_ffi.o -o cake.x86 -lm
-    printf '#!/bin/sh\nexec %q "$(dirname "$0")/cake.x86" "$@"\n' "$QEMU" > cake
+    printf '#!/usr/bin/env bash\nexec %q "$(dirname "$0")/cake.x86" "$@"\n' "$QEMU" > cake
     chmod +x cake ;;
   *)
     echo "this recipe needs x86-64 or ARM64 Linux, not $(uname -m)" >&2

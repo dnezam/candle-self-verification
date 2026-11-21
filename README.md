@@ -48,9 +48,11 @@ unpacked without root by `dpkg-deb -x`.
    fixtures depend on `cv`, which `upto-hol` builds.
 
    ```sh
-   cd /path/to/HOL
-   poly < tools/smart-configure.sml
-   bin/build --trknl --seq=tools/sequences/upto-hol
+   (
+     cd /path/to/HOL
+     poly < tools/smart-configure.sml
+     bin/build --trknl --seq=tools/sequences/upto-hol
+   )
    ```
 
 3. Build Candle's runtime in a clean Candle checkout at `candle`. On ARM64,
