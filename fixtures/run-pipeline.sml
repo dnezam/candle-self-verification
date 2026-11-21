@@ -30,41 +30,6 @@ val _ = List.app (fn (name, path) =>
   TextIO.output (raw_order, name ^ "\t" ^ path ^ "\n")) (!ordered);
 val _ = TextIO.closeOut raw_order;
 val _ = PFTEmit.emit_expect := false;
-fun inventory file = let
-  val {ruleset, ...} = PFTReader.read_header {file = file, binary = true}
-  val descs = PFTOpcodes.descs_for_ruleset ruleset
-  val counts = ref ([] : (string * int) list)
-  val axioms = ref ([] : string option list)
-  fun count name =
-    case List.find (fn (n, _) => n = name) (!counts) of
-        NONE => counts := !counts @ [(name, 1)]
-      | SOME _ => counts := List.map
-          (fn (n, total) => (n, if n = name then total + 1 else total)) (!counts)
-  fun command name _ = count name
-  val format : PFTReader.format_handler = {
-    tyvar = command "TYVAR", tyop = command "TYOP", var = command "VAR",
-    const = command "CONST", comb = command "COMB", abs = command "ABS",
-    new_const = command "NEW_CONST", new_type = command "NEW_TYPE",
-    axiom = fn (_, _, name) => (count "AXIOM"; axioms := name :: !axioms),
-    save = command "SAVE", load = command "LOAD", del = command "DEL",
-    del_range = command "DEL_RANGE"}
-  fun specific opcode reader = let
-    val desc = PFTOpcodes.lookup_desc descs opcode
-    val _ = if null (#results desc) then ()
-            else ignore (#readVarint reader ())
-    val _ = PFTReader.read_raw_args desc reader
-  in count (#tag desc) end
-  val _ = PFTReader.read {file = file, binary = true,
-    format_handler = format, ruleset_handler = specific}
-  val out = TextIO.openOut (file ^ ".inventory")
-  val _ = TextIO.output (out, "RULESET\t" ^ ruleset ^ "\n")
-  val _ = List.app (fn (name, total) => TextIO.output
-    (out, "COMMAND\t" ^ name ^ "\t" ^ Int.toString total ^ "\n")) (!counts)
-  val _ = List.app (fn name => TextIO.output (out,
-    "AXIOM\t" ^ (case name of SOME n => "NAMED\t" ^ n | NONE => "UNNAMED") ^ "\n"))
-    (rev (!axioms))
-in TextIO.closeOut out end;
-
 fun emit ruleset subdir = let
   val dir = OS.Path.concat (pipeline_build, subdir)
   val candle = case ruleset of PFTEmit.Candle => true | _ => false
@@ -94,7 +59,6 @@ fun emit ruleset subdir = let
     pipeline_targets
   val _ = PFTMerge.merge {inputs = !paths, targets = targets,
     output = output "merged", binary = true}
-  val _ = List.app inventory (!paths @ [output "merged"])
 in () end;
 val _ = emit PFTEmit.HOL4 "hol4";
 val _ = emit PFTEmit.Candle "candle";
