@@ -17,7 +17,7 @@ README](../README.md#setup) says, with the HOL checkout to test in place of
 the pinned one if you like. Then build the converter driver in that HOL:
 
 ```sh
-bin/Holmake --poly_not_hol -C src/postkernel/prooftrace PFTCLI.uo
+(cd /path/to/HOL && bin/Holmake --poly_not_hol -C src/postkernel/prooftrace PFTCLI.uo)
 ```
 
 ## Running the check

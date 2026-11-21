@@ -27,8 +27,8 @@ reference results) is kept at
 
 ## Setup
 
-You need Linux on x86-64 or ARM64, Python 3.11+, curl, GNU make and a C
-toolchain. Candle's runtime is an x86-64 binary: on ARM64, also install Zig
+You need Linux on x86-64 or ARM64, Python 3.11+, curl, patch, GNU make and C
+and C++ compilers. Candle's runtime is an x86-64 binary: on ARM64, also install Zig
 (`uv tool install ziglang==0.17.0` provides `python-zig`) and QEMU user mode.
 The tested QEMU is `usr/bin/qemu-x86_64-static` from Ubuntu's
 [`qemu-user-static_8.2.2+ds-0ubuntu1.18_arm64.deb`](https://ports.ubuntu.com/ubuntu-ports/pool/universe/q/qemu/qemu-user-static_8.2.2+ds-0ubuntu1.18_arm64.deb)
@@ -56,10 +56,11 @@ unpacked without root by `dpkg-deb -x`.
    ```
 
 3. Build Candle's runtime in a clean Candle checkout at `candle`. On ARM64,
-   first set `QEMU` to the absolute path of `qemu-x86_64-static`.
+   pass the absolute path of `qemu-x86_64-static` in `QEMU`.
 
    ```sh
-   ./build-candle.sh /path/to/Candle
+   ./build-candle.sh /path/to/Candle                                   # x86-64
+   QEMU=/path/to/qemu-x86_64-static ./build-candle.sh /path/to/Candle  # ARM64
    ```
 
 ## Running

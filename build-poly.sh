@@ -16,8 +16,9 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 pin() { python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])' "$root/pins.json" "$1"; }
 rev=$(pin polyml)
 
+# Kept on failure for its logs (config.log and the like).
 work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
+echo "building in $work"
 cd "$work"
 curl -fL -o polyml.tar.gz "https://codeload.github.com/digama0/polyml/tar.gz/$rev"
 echo "$(pin polyml_archive_sha256)  polyml.tar.gz" | sha256sum -c -
@@ -37,4 +38,5 @@ if [ "$actual" != 2300000000000000 ]; then
   echo "exportSmallToFD probe wrote $actual; expected 2300000000000000" >&2
   exit 1
 fi
+rm -rf "$work"
 echo "Poly/ML $rev installed in $prefix; export probe passed"
